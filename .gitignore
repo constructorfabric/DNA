@@ -81,3 +81,6 @@ Desktop.ini
 # - Hugo: /public
 # - Sphinx: /_build
 # - Jekyll: /_site
+
+# code-ranker reports
+.code-ranker/

@@ -16,27 +16,37 @@ This document defines versioning strategy, compatibility rules, and deprecation 
 
 ### Version Format
 
-- **Path-based versioning**: `/v1`, `/v2`, etc.
+- **Path-based versioning**: `/v1`, `/v2`, etc. — production, stable APIs only
 - **Semantic structure**: Major version only in URL path
 - **Internal versioning**: Use semantic versioning (e.g., `1.2.3`) internally for tracking
+- **Pre-release environments**: `preview` and `experimental` tiers are an ENVIRONMENT dimension, not a path version. They are served from a separate host or base path (e.g. `https://api-preview.example.com/v1`, `https://api-experimental.example.com/v1`) — never as a `v1-alpha`/`v1-beta` path segment.
 
-```
+```text
 https://api.example.com/v1/users
 https://api.example.com/v2/users
+https://api-preview.example.com/v1/users
 ```
 
 ### Version Lifecycle
 
-1. **Development**: `v1-alpha`, `v1-beta` (internal/staging only)
-2. **Stable**: `v1` (production ready)
-3. **Deprecated**: `v1` (sunset period)
-4. **Retired**: `v1` (no longer available)
+Stability tiers follow [PLID-10.02 Stability Declaration](../public-interface/PLID.md#plid-1002-stability-declaration-crit) — the same vocabulary used for SDKs, so a repository that ships both an API and a client library states compatibility once, not twice.
+
+| Tier | Path | Meaning |
+| --- | --- | --- |
+| **experimental** | `https://api-experimental.example.com/v1` | No compatibility promise; may be reshaped or removed at any release. |
+| **preview** | `https://api-preview.example.com/v1` | Stabilizing; breaking changes possible but unlikely before promotion. |
+| **stable** | `https://api.example.com/v1` | Production ready; backward compatibility guaranteed until the next major version. |
+| **deprecated** | `https://api.example.com/v1` | Still production; scheduled for removal, migration path documented. Returns its normal status codes plus `Deprecation` and `Sunset` headers (see [Deprecation Process](#deprecation-process)). |
+| **retired** | — | No longer available; requests return `410 Gone`. |
+
+Promotion from `experimental` or `preview` to `stable` MUST NOT change the path or payload shape: an endpoint validated at `https://api-preview.example.com/v1/users` is promoted to `https://api.example.com/v1/users` unchanged.
 
 ## Compatibility Rules
 
 ### Backward Compatibility (Within Major Version)
 
 **MUST maintain compatibility** for:
+
 - Existing endpoint URLs
 - Request/response field names and types
 - HTTP status codes for existing scenarios
@@ -44,6 +54,7 @@ https://api.example.com/v2/users
 - Core functionality behavior
 
 **MAY be added** without breaking compatibility:
+
 - New optional fields in requests
 - New fields in responses
 - New endpoints
@@ -54,6 +65,7 @@ https://api.example.com/v2/users
 ### Forward Compatibility (Client Resilience)
 
 Clients **MUST** be designed to:
+
 - Ignore unknown fields in responses
 - Handle additional enum values gracefully
 - Not rely on field order in JSON objects
@@ -64,6 +76,7 @@ Clients **MUST** be designed to:
 ### ✅ Non-Breaking Changes
 
 **Request Changes**:
+
 - Adding optional fields
 - Adding optional query parameters
 - Adding new enum values to optional fields
@@ -71,6 +84,7 @@ Clients **MUST** be designed to:
 - Relaxing validation rules
 
 **Response Changes**:
+
 - Adding new fields
 - Adding new enum values
 - Adding new optional headers
@@ -78,6 +92,7 @@ Clients **MUST** be designed to:
 - Improving performance/response times
 
 **Endpoint Changes**:
+
 - Adding new endpoints
 - Adding new HTTP methods to existing resources
 - Adding new optional headers
@@ -85,6 +100,7 @@ Clients **MUST** be designed to:
 ### ❌ Breaking Changes
 
 **Request Changes**:
+
 - Removing fields
 - Making optional fields required
 - Changing field types
@@ -94,6 +110,7 @@ Clients **MUST** be designed to:
 - Changing URL structure
 
 **Response Changes**:
+
 - Removing fields
 - Changing field types
 - Changing field semantics
@@ -102,6 +119,7 @@ Clients **MUST** be designed to:
 - Changing error response format
 
 **Endpoint Changes**:
+
 - Removing endpoints
 - Removing HTTP methods
 - Changing authentication requirements
@@ -114,10 +132,12 @@ Clients **MUST** be designed to:
 When deprecating APIs, include these headers:
 
 ```http
-Deprecation: true
+Deprecation: @1767225599
 Sunset: Wed, 31 Dec 2025 23:59:59 GMT
 Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
 ```
+
+`Deprecation` is a structured-field **Date** per [RFC 9745](https://www.rfc-editor.org/rfc/rfc9745): an `@` followed by unix seconds (`@1767225599` is `2025-12-31T23:59:59Z`, matching the `Sunset` example above). `Deprecation: true` is NOT valid. `Sunset` uses the HTTP-date format from RFC 8594; note it MUST agree with the actual weekday (RFC 9110 §5.6.7) — the OpenAPI `x-sunset` extension below expresses the same instant in ISO-8601 instead, which is a deliberate difference in format, not a mistake.
 
 ### Deprecation Timeline
 
@@ -137,8 +157,10 @@ Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
    - Direct support for migration
 
 4. **Retirement** (T-0):
-   - Remove deprecated version
-   - Return 410 Gone for deprecated endpoints
+   - Remove the retired version
+   - Return `410 Gone` for retired endpoints
+
+A deprecated but not yet retired endpoint returns its normal status codes plus `Deprecation` and `Sunset` headers.
 
 ### Deprecation Response Format
 
@@ -146,7 +168,7 @@ For deprecated endpoints, maintain functionality but add warnings via **HTTP hea
 
 ```http
 HTTP/1.1 200 OK
-Deprecation: true
+Deprecation: @1767225599
 Sunset: Wed, 31 Dec 2025 23:59:59 GMT
 Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
 Content-Type: application/json
@@ -161,12 +183,14 @@ Content-Type: application/json
 ### Migration Strategy
 
 **Gradual Migration**:
+
 - Support overlapping versions (typically 2 major versions)
 - Provide clear migration paths
 - Offer dual-write capabilities for data changes
 - Maintain feature parity during transition
 
 **Migration Tools**:
+
 - Automated compatibility checkers
 - Code generation for new SDKs
 - Migration scripts for common patterns
@@ -175,28 +199,40 @@ Content-Type: application/json
 ### Version Negotiation
 
 **Path-based (Recommended)**:
+
 ```http
 GET /v2/users HTTP/1.1
 Host: api.example.com
 ```
 
-**Header-based (Alternative)**:
+**Rejected alternatives**:
+
+Header-based negotiation is shown below only as an example of what NOT to do — it contradicts path-only versioning and the "one clear way" principle:
+
 ```http
 GET /users HTTP/1.1
 Host: api.example.com
 API-Version: 2
 ```
 
+It is REJECTED because:
+
+- **Cacheability**: the URL is the cache key; a header-selected version fragments the cache behind a single URL, or requires `Vary: API-Version`, which most caches and CDNs handle poorly.
+- **Visibility**: the version does not appear in access logs, browser history, or bug reports, making incidents harder to diagnose.
+- **Testability**: a path-based version is testable with a plain `curl https://api.example.com/v2/users`; a header-based version requires remembering a non-standard header on every request.
+
 ## Client Guidelines
 
 ### Robust Client Design
 
 **Version Handling**:
+
 - Always specify API version explicitly
 - Handle version-specific responses gracefully
 - Implement fallback mechanisms for deprecated features
 
 **Error Handling**:
+
 ```json
 {
   "type": "https://api.example.com/errors/version-not-supported",
@@ -209,6 +245,7 @@ API-Version: 2
 ```
 
 **Future-Proofing**:
+
 - Use strongly-typed models with unknown field handling
 - Implement graceful degradation for new enum values
 - Version your own client SDKs alongside API versions
@@ -216,11 +253,12 @@ API-Version: 2
 ### SDK Versioning
 
 **Client SDK Strategy**:
+
 - Major SDK version tracks API major version
 - Minor SDK updates for new features within API version
 - Patch SDK updates for bug fixes
 
-```
+```text
 SDK v2.1.0 → API v2
 SDK v2.2.0 → API v2 (new features)
 SDK v3.0.0 → API v3
@@ -260,13 +298,14 @@ paths:
           description: Success
           headers:
             Deprecation:
-              description: Indicates if the API version is deprecated
+              description: >-
+                Structured-field Date per RFC 9745: an `@` followed by the
+                unix timestamp at which the version was deprecated. Absent
+                when the version is not deprecated.
               schema:
-                type: boolean
-              example: false
+                type: string
+              example: "@1767225599"
 ```
-
-Note: the `Sunset` **header** uses the HTTP-date format (RFC 9110), while the `x-sunset` OpenAPI **extension** above uses ISO-8601; both express the same instant.
 
 ### Backward Compatibility Testing
 
@@ -274,21 +313,25 @@ Note: the `Sunset` **header** uses the HTTP-date format (RFC 9110), while the `x
 // Automated compatibility testing
 describe('API Compatibility', () => {
   test('v2 should accept all valid v1 requests', async () => {
-    const v1Response = await fetch('/v1/users', v1Request);
-    const v2Response = await fetch('/v2/users', v1Request);
+    const headers = { 'Content-Type': 'application/json' };
+    const v1Response = await fetch('/v1/users', { headers });
+    const v2Response = await fetch('/v2/users', { headers });
 
     // Core functionality should work
     expect(v2Response.status).toBe(v1Response.status);
-    expect(v2Response.data.users).toBeDefined();
+
+    const v1Body = await v1Response.json();
+    const v2Body = await v2Response.json();
+    expect(v2Body.items).toBeDefined();
 
     // v2 may include additional fields, but core fields should match
-    const v1Users = v1Response.data.users;
-    const v2Users = v2Response.data.users;
+    const v1Items = v1Body.items;
+    const v2Items = v2Body.items;
 
-    v1Users.forEach((v1User, index) => {
-      const v2User = v2Users[index];
-      expect(v2User.id).toBe(v1User.id);
-      expect(v2User.name).toBe(v1User.name);
+    v1Items.forEach((v1Item, index) => {
+      const v2Item = v2Items[index];
+      expect(v2Item.id).toBe(v1Item.id);
+      expect(v2Item.name).toBe(v1Item.name);
       // v2 may have additional fields - that's OK
     });
   });
@@ -335,4 +378,4 @@ Before creating a new major version:
 
 - [Semantic Versioning](https://semver.org/)
 - [RFC 8594 - The Sunset HTTP Header Field](https://www.rfc-editor.org/rfc/rfc8594)
-- [API Deprecation Guidelines](https://datatracker.ietf.org/doc/draft-ietf-httpapi-deprecation-header/)
+- [RFC 9745 - The Deprecation HTTP Header Field](https://www.rfc-editor.org/rfc/rfc9745)

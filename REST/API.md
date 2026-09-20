@@ -52,7 +52,7 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 - **Errors**: Problem Details `application/problem+json` (RFC 9457)
 - **Encoding**: UTF-8
 - **Compression**: gzip/br when client sends `Accept-Encoding`
-- **Idempotency**: `Idempotency-Key` header on unsafe methods (see §7)
+- **Idempotency**: `Idempotency-Key` header on unsafe methods (see [§8](#8-concurrency--idempotency))
 
 ## 3. Resource Modeling & URLs
 - **Nouns, plural**: `/users`, `/tickets`, `/tickets/{ticket_id}`
@@ -194,7 +194,7 @@ Access-Control-Expose-Headers: ETag, Location, RateLimit, RateLimit-Policy
 ```
 
 - CSRF: only relevant for cookie auth; prefer Bearer in `Authorization` for SPAs
-- Content Security Policy on the app domain; avoid wildcard `*/*`
+- Content Security Policy on the app domain; avoid wildcard source expressions such as `default-src *` or `script-src 'unsafe-inline'`
 
 ## 16. Observability & Diagnostics
 - **Tracing**: accept/propagate `traceparent` (W3C). Emit `trace_id` header on all responses
@@ -208,6 +208,8 @@ Access-Control-Expose-Headers: ETag, Location, RateLimit, RateLimit-Policy
 - **Breaking changes**: Removing fields, changing types/semantics, making optional fields required, changing URL structure
 - **Client compatibility**: Must ignore unknown fields, handle new enum values gracefully, not rely on field order
 - **Deprecation headers**: `Deprecation: true`, `Sunset: <RFC 8594 date>`, and `Link: <doc>; rel="deprecation"`
+
+For the complete specification see [VERSIONING.md](VERSIONING.md).
 
 ## 18. Canonical Status Codes
 

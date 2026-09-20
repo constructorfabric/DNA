@@ -20,7 +20,19 @@ A short list of guiding ideas the rest of this document elaborates. Every requir
 - **Documentation and examples are part of the contract.** Consumers copy examples verbatim and read item-level docs more often than they read source; treat both with the same discipline as code.
 - **Conform to the ecosystem.** Familiar conventions beat clever novelty.
 
+## Severity Levels
+
+Every requirement below is tagged `CRIT`, `MAJOR`, or `MINOR`. These tags are not decoration — they are the grading scale a review verdict is computed from.
+
+- **CRIT** — a violation blocks approval. The interface MUST NOT ship until it is resolved or an explicit, recorded exception is granted.
+- **MAJOR** — a violation MUST be resolved before the next release that exposes the interface publicly; it may be recorded as a tracked follow-up rather than blocking the review.
+- **MINOR** — a violation is recorded as advisory and does not block.
+
+A review verdict is the highest unresolved severity found. "No CRIT open" is the approval gate: a review with only MAJOR or MINOR findings open MAY be approved with tracked follow-ups, but a review with any open CRIT finding MUST NOT be approved. See the [Minimal Review/Approval Checklist](#minimal-reviewapproval-checklist) at the end of this document for the concrete set of checks a review applies before reaching that verdict.
+
 ## Table of Contents
+
+- [Severity Levels](#severity-levels)
 
 - **Part I — Contract Foundations**
   - [PLID-10 Public Contract Definition & Stability](#plid-10-public-contract-definition--stability)
@@ -52,7 +64,6 @@ A short list of guiding ideas the rest of this document elaborates. Every requir
 
 - [Minimal Review/Approval Checklist](#minimal-reviewapproval-checklist)
 - [References](#references)
-
 
 # PLID-10 Public Contract Definition & Stability
 
@@ -87,6 +98,9 @@ Tiers:
 - **preview** — feature is stabilizing; breaking changes possible but unlikely before promotion to stable.
 - **experimental** — no compatibility promise; may be reshaped or removed at any minor release.
 - **deprecated** — discouraged; scheduled for removal in the next major version; migration path documented.
+- **retired** — no longer served; requests receive `410 Gone`.
+
+[`../REST/VERSIONING.md`](../REST/VERSIONING.md) applies these tiers to API versions.
 
 ## PLID-10.03 Compatibility Dimensions (CRIT)
 
@@ -114,7 +128,6 @@ Consumers often copy examples verbatim and then rely on that usage pattern for y
 Every exported symbol is a long-term support obligation. Adding a public item is a one-line change; removing it requires a major version bump, a migration guide, and downstream churn. This asymmetry is the dominant cost driver in library evolution.
 
 Default to keeping types, functions, and modules private until there is a concrete consumer need to expose them. When unsure whether something should be public — leave it out *(Joshua Bloch)*. You can always add it later; you can rarely take it back.
-
 
 # PLID-11 Meaningful Types & Misuse-Resistant Modeling
 
@@ -145,7 +158,7 @@ Unit and precision bugs are common, expensive, and hard to notice in review. If 
 
 Use, in order of preference:
 
-- built-in or stdlib types where they exist (e.g., `time.Duration`/`time.Time` in Go, `std::time::Duration`/`chrono::DateTime` in Rust, `TimeSpan`/`DateTime`/`decimal` in .NET, `decimal.Decimal` in Python) — do not invent parallel types when the ecosystem already has a canonical one
+- built-in or stdlib types where they exist (e.g., `time.Duration`/`time.Time` in Go, `std::time::Duration` in Rust — see [`../languages/RUST.md`](../languages/RUST.md) for the DNA-mandated date-time crate, `TimeSpan`/`DateTime`/`decimal` in .NET, `decimal.Decimal` in Python) — do not invent parallel types when the ecosystem already has a canonical one
 - domain-specific wrapper types when no canonical stdlib type fits (e.g., `Money`, `Bytes`, `RequestsPerSecond`)
 - unit-bearing names (e.g., `timeoutMs`, `sizeBytes`) as a fallback when a wrapper type is impractical
 - explicit overflow, precision, and rounding rules documented at the boundary
@@ -164,7 +177,6 @@ Examples include:
 - disconnected versus connected
 - unauthenticated versus authenticated
 - draft versus committed
-
 
 # PLID-12 Consistency Across Surface Area
 
@@ -191,7 +203,6 @@ Public APIs should behave how experienced users expect in that ecosystem unless 
 An API should do one thing, and do it well *(Joshua Bloch)*. A library whose purpose can be stated in a single sentence is easier to learn, easier to evolve, and easier to replace. When a module accumulates unrelated capabilities, every consumer pays for the parts they do not use, and every refactor risks breaking an unrelated client.
 
 If you cannot describe what the interface is for in one sentence — split it. Two narrow, cohesive libraries beat one broad, vague one.
-
 
 # PLID-20 Evolvability & Future Change
 
@@ -244,8 +255,7 @@ Examples include:
 
 Public APIs should expose what consumers must rely on — and no more. Over-specifying behavior in types, signatures, or documentation locks the implementation: tomorrow's optimization, cache layer, retry strategy, or replacement backend becomes a breaking change. *"Keep APIs free of implementation details. They confuse users and inhibit the flexibility to evolve."* — Joshua Bloch.
 
-Document the guarantees consumers can build on (see PLID-42.03), and explicitly mark behaviors that are *not* part of the contract (ordering of debug fields, internal cache TTLs, exact retry counts, log message wording). When in doubt, under-specify rather than over-specify.
-
+Document the guarantees consumers can build on (see [PLID-42.03](#plid-4203-behavioral-documentation-crit)), and explicitly mark behaviors that are *not* part of the contract (ordering of debug fields, internal cache TTLs, exact retry counts, log message wording). When in doubt, under-specify rather than over-specify.
 
 # PLID-21 Governance, Versioning & Release Discipline
 
@@ -297,7 +307,6 @@ For each release, record:
 - migration guidance for any non-trivial change
 - minimum supported toolchain/runtime bumps
 
-
 # PLID-30 Dependency & Boundary Design
 
 Public boundaries should not leak accidental implementation choices.
@@ -331,6 +340,8 @@ Note: prefer small, composable contracts over large inheritance-style hierarchie
 
 If multiple languages, runtimes, processes, or generators consume the interface, portability becomes part of the contract.
 
+For HTTP APIs, the concrete DNA contract is [`../REST/API.md`](../REST/API.md) §4 (JSON Conventions).
+
 ## PLID-31.01 Stable Serialization Rules (CRIT)
 
 Field names, enum values, defaults, nullability, and missing-field semantics must be intentional and stable. Wire contracts usually outlive in-process APIs and are much harder to migrate.
@@ -359,7 +370,6 @@ Avoid:
 - ambiguous nullability
 - inconsistent casing
 - overloaded fields with multiple meanings
-
 
 # PLID-40 Ergonomics & Discoverability
 
@@ -402,7 +412,6 @@ Consult and follow language-specific API guidelines where they exist — for exa
 If every consumer writes the same wrapping, conversion, retry, or cleanup boilerplate around your API, that boilerplate is a design failure of the library — not a fact of life for the user. *"A class should do one thing well and the user should not need to do anything the class could do for them."* — Joshua Bloch.
 
 Treat repetitive consumer code seen in examples, tests, or downstream repos as a signal to reshape the interface.
-
 
 # PLID-41 Validation, Safe Defaults & Construction
 
@@ -455,7 +464,6 @@ Examples:
 Prefer one configuration model with reasonable defaults over splitting configuration into multiple tiers (e.g., "common" vs "expert"). Two configuration surfaces are hard to maintain, the boundary between them is subjective, and "advanced" sections tend to accumulate everything the team did not want to highlight.
 
 Use per-field markers (e.g., `@advanced`, `@unstable`, doc comments) to flag knobs that should be touched only deliberately, while keeping all configuration in one place.
-
 
 # PLID-42 Documentation as Product
 
@@ -517,7 +525,6 @@ Good navigation reduces misuse and shortens learning time. Cross-link adjacent t
 
 Consistency makes large public surfaces easier to skim. Use consistent documentation structure for summaries, invariants, errors, examples, and related items.
 
-
 # PLID-43 Testing & Verification of Public Contracts
 
 Test promises, not only internals.
@@ -534,10 +541,11 @@ Compatibility promises are only real if they are exercised continuously. Verify 
 
 Provide builders, fakes, fixtures, or test-support packages for common downstream testing needs when the ecosystem supports it. Without shared test support, every consumer reimplements similar scaffolding and drifts.
 
-
 # PLID-50 Error & Failure Contracts
 
 Errors are first-class interface surface and must be designed deliberately.
+
+For HTTP APIs, the concrete DNA contract is [`../REST/STATUS_CODES.md`](../REST/STATUS_CODES.md) as the error-code registry and [`../REST/API.md`](../REST/API.md) §7 as the wire format.
 
 ## PLID-50.01 Actionable Error Taxonomy (CRIT)
 
@@ -596,7 +604,6 @@ Two failures with the same message may demand opposite recovery actions. Documen
 
 Human display text is not a safe compatibility boundary. For cross-process or cross-language usage, provide stable error codes distinct from human-readable messages.
 
-
 # PLID-51 Concurrency, Cancellation & Execution Model
 
 Consumers need to understand behavior under parallelism, time, and re-entrancy.
@@ -639,8 +646,7 @@ Make unsafe combinations visible at the call site through explicit naming, annot
 
 ## PLID-51.06 Serialization versus Parallelism Choices (MINOR)
 
-Consumers need to know whether contention is a design decision or an accidental bottleneck.If the interface intentionally serializes work, state that and explain why.
-
+Consumers need to know whether contention is a design decision or an accidental bottleneck. If the interface intentionally serializes work, state that and explain why.
 
 # PLID-52 Performance & Resource Contracts
 
@@ -700,6 +706,7 @@ Document at minimum:
 - deleted-row behavior, including whether removals can cause skips, short pages, invalid cursors, or reflow of later results
 - sort guarantees, including the exact ordering fields, tie-break rules, and whether the order is total and stable across requests
 
+For HTTP APIs, the concrete DNA contract is [`../REST/QUERYING.md`](../REST/QUERYING.md).
 
 # PLID-53 Observability & Operational Readiness
 
@@ -741,13 +748,12 @@ For public types, ensure:
 
 - debug representation is non-empty and identifies the type meaningfully
 - display representation, when provided, is stable and user-facing
-- secrets and regulated data are redacted in both (see PLID-10.02)
+- secrets and regulated data are redacted in both (see [PLID-53.02](#plid-5302-sensitive-data-safety-crit))
 - representations do not accidentally become a parsed contract; if structured access is needed, expose explicit accessors
-
 
 # PLID-54 Security Boundaries & Hazardous Operations
 
-Security guidance is most useful when it focuses on authority boundaries and high-risk actions rather than repeating the general misuse-resistance rules already covered by PLID-11 and PLID-41.
+Security guidance is most useful when it focuses on authority boundaries and high-risk actions rather than repeating the general misuse-resistance rules already covered by [PLID-11](#plid-11-meaningful-types--misuse-resistant-modeling) and [PLID-41](#plid-41-validation-safe-defaults--construction).
 
 ## PLID-54.01 Least-Privilege Surface Design (CRIT)
 
@@ -764,7 +770,6 @@ Examples:
 
 High-risk operations should require deliberate intent, not rely on subtle defaults or hidden side effects. Make destructive or irreversible actions obvious and hard to trigger accidentally.
 
-
 # PLID-55 State Mutation & Side Effects
 
 Many APIs are dangerous because mutation semantics are vague.
@@ -780,7 +785,6 @@ Avoid surprising writes, network calls, filesystem changes, telemetry emission, 
 ## PLID-55.03 Idempotent vs Non-Idempotent Operations (MAJOR)
 
 State clearly whether repeated calls are safe.
-
 
 # PLID-56 Data Lifecycle & Retention
 
@@ -803,7 +807,6 @@ Define whether delete means:
 ## PLID-56.03 Read-After-Write Guarantees (MAJOR)
 
 Consumers need to know whether writes are immediately observable.
-
 
 # Minimal Review/Approval Checklist
 

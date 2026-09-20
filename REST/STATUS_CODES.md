@@ -2,20 +2,56 @@
 
 This document outlines the usage of HTTP status codes and application-level error codes according to the API Guidelines. Ensure that responses remain consistent across all endpoints.
 
+### Application Error Codes
+
+Every RFC 9457 Problem Details response body carries a **REQUIRED** top-level `code`
+member, in addition to the standard `type`/`title`/`status`/`detail`/`instance` members.
+This document is the registry for those codes: every application error code used anywhere
+in the API MUST appear here exactly once.
+
+- Codes are `SCREAMING_SNAKE_CASE` and stable across versions — `code` is a wire contract
+  (PLID-31.03).
+- `type` and `code` are 1:1: each `code` has exactly one `type` URI, and each `type`
+  resolves back to exactly one `code`.
+- `type` URI template: `https://api.example.com/errors/{code-in-kebab-case}`, e.g.
+  `INVALID_CURSOR` → `https://api.example.com/errors/invalid-cursor`.
+
 ### Success
 
 - 200 OK: Standard successful GET/PUT/PATCH responses.
 - 201 Created: Resource successfully created. Include `Location` header.
 - 202 Accepted: Async operation accepted; returns operation status handle.
 - 204 No Content: Successful mutation with no body.
+- 207 Multi-Status: Batch/bulk request with mixed per-item outcomes. Originates in
+  RFC 4918 (WebDAV) and is reused here for JSON batch envelopes; see `BATCH.md`.
+- 304 Not Modified: Conditional `GET`/`HEAD` with `If-None-Match` matches the current
+  representation; no body returned.
+
+Out of scope (deliberately not covered by this document): 1xx informational responses,
+and 3xx redirection status codes other than `304`.
 
 ### Client errors
+
+#### 400 vs 422 Decision Rule
+
+- **400** — the request is unparseable, or it names an identifier outside the endpoint's
+  allowlist.
+- **422** — the request parses and names valid fields, but a value violates a documented
+  constraint.
+
+**Carve-out:** `ORDER_MISMATCH`, `FILTER_MISMATCH` and `FIELD_SELECTION_MISMATCH` stay
+**400** even though the rule above would suggest 422. The fault is in how the request was
+assembled — `$orderby`/`$filter`/`$select` contradicts a cursor token the request itself
+carries — not in a field value, so it is treated as a malformed request rather than a
+value-level validation failure.
 
 - 400 Bad Request
   - Malformed syntax, invalid parameters, or invalid cursor.
   - Error codes:
     - Pagination: `INVALID_CURSOR`, `ORDER_MISMATCH`, `FILTER_MISMATCH`, `UNSUPPORTED_FILTER_FIELD`, `UNSUPPORTED_ORDERBY_FIELD`
-    - Field projection: `INVALID_FIELD`, `TOO_MANY_FIELDS`, `FIELD_SELECTION_MISMATCH`
+    - Field projection: `INVALID_FIELD`, `FIELD_SELECTION_MISMATCH`
+    - Idempotency: `INVALID_IDEMPOTENCY_KEY`
+    - Batch: `BATCH_CONFLICT` (cross-item conflict detected before execution; see `BATCH.md`)
     - General: `INVALID_QUERY`
 - 401 Unauthorized
   - Missing/invalid/expired auth.
@@ -37,11 +73,15 @@ This document outlines the usage of HTTP status codes and application-level erro
   - Error codes: `REQUEST_TIMEOUT`.
 - 409 Conflict
   - Resource state conflict (duplicate, version conflict, invariant violation).
-  - Error codes: `CONFLICT`, `VERSION_CONFLICT`, `DUPLICATE`.
+  - Error codes: `CONFLICT`, `VERSION_CONFLICT`, `DUPLICATE`, `IDEMPOTENCY_IN_PROGRESS`.
+  - `IDEMPOTENCY_IN_PROGRESS` (the first request for a given `Idempotency-Key` is still
+    in flight) MUST include a `Retry-After` header.
 - 410 Gone
-  - Resource permanently deleted or endpoint permanently removed/deprecated.
+  - Resource permanently deleted or endpoint permanently removed (retired).
   - Error codes: `GONE`, `PERMANENTLY_DELETED`, `ENDPOINT_RETIRED`.
-  - Use for: Hard-deleted resources, sunset API versions after retirement date.
+  - Use for: Hard-deleted resources, retired API versions after their sunset date.
+  - A deprecated but not yet retired endpoint MUST NOT return `410`; it returns its
+    normal status codes plus `Deprecation` and `Sunset` headers (see `VERSIONING.md`).
 - 412 Precondition Failed
   - ETag preconditions failed.
   - Error codes: `PRECONDITION_FAILED`.
@@ -53,7 +93,11 @@ This document outlines the usage of HTTP status codes and application-level erro
   - Error codes: `UNSUPPORTED_MEDIA_TYPE`.
 - 422 Unprocessable Entity
   - Validation failed, semantically invalid input.
-  - Error codes: `INVALID_LIMIT`, `VALIDATION_ERROR`, `SCHEMA_MISMATCH`.
+  - Error codes: `INVALID_LIMIT`, `VALIDATION_ERROR`, `SCHEMA_MISMATCH`, `TOO_MANY_FIELDS`,
+    `BATCH_FAILED` (atomic batch rolled back; see `BATCH.md`),
+    `IDEMPOTENCY_KEY_REUSED`.
+  - `IDEMPOTENCY_KEY_REUSED` is returned when the same `Idempotency-Key` is reused with a
+    different request fingerprint (method, path, and canonical body hash).
 - 428 Precondition Required
   - The request is required to be conditional or include a specific precondition (e.g., `If-Match`, `Idempotency-Key`) per API policy.
   - Error codes: `PRECONDITION_REQUIRED`.
@@ -87,6 +131,7 @@ This document outlines the usage of HTTP status codes and application-level erro
   - Use for: Returned by API gateways, reverse proxies, load balancers, or BFF services when waiting for upstream. Application servers should not return 504 for their own slow operations.
 
 **5xx vs 4xx Decision**:
+
 - Use **4xx** when the client can fix the problem (bad input, missing auth, etc.)
 - Use **5xx** when the server/infrastructure has the problem (bugs, outages, dependencies)
 - When in doubt: if retrying the identical request might succeed after server recovery, use 5xx
@@ -119,11 +164,11 @@ These are typical status codes for each HTTP method. Edge cases may warrant addi
 
 ### Retry Guidance for Clients
 
-Understanding which status codes are safe to retry is critical for building resilient clients without causing duplicate operations or data corruption.
+Understanding which status codes are safe to retry is critical for building resilient clients without causing duplicate operations or data corruption. Retry eligibility follows a method's **safety**, not merely its idempotency: retrying a safe method never has side effects, while retrying an idempotent-but-unsafe method can still race with itself. Per RFC 9110 §9.2.2, the idempotent set (`GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE`) is a superset of the safe set (`GET`, `HEAD`, `OPTIONS`).
 
-**Safe to Retry (Idempotent Methods Only):**
+**Tier 1 — Safe (`GET`, `HEAD`, `OPTIONS`): retry freely.**
 
-The following status codes are **safe to retry automatically**, but **only** for idempotent HTTP methods (`GET`, `HEAD`, `OPTIONS`):
+The following status codes are **safe to retry automatically** for these methods:
 
 - `408` Request Timeout
 - `429` Too Many Requests (respect `Retry-After` header)
@@ -132,15 +177,17 @@ The following status codes are **safe to retry automatically**, but **only** for
 - `503` Service Unavailable (respect `Retry-After` header)
 - `504` Gateway Timeout
 
-**For non-idempotent methods** (`POST`, `PATCH`):
-- **Only retry if** the request includes an `Idempotency-Key` header
-- Without `Idempotency-Key`, retrying may cause duplicate operations (double charges, duplicate resources, etc.)
+**Tier 2 — Idempotent but not safe (`PUT`, `DELETE`): retry unless the endpoint documents side effects.**
 
-**Note on PUT and DELETE:**
-- `PUT` is idempotent when replacing a complete resource (same request = same result)
-- `DELETE` is typically idempotent (deleting already-deleted resource still results in "not found")
-- However, implementation details matter: if `PUT` performs side effects (e.g., incrementing counters) or `DELETE` has non-idempotent behavior, treat them as non-idempotent and require `Idempotency-Key` for safe retries
-- Check your API documentation to determine if specific endpoints are truly idempotent
+- `PUT` is idempotent when replacing a complete resource (same request = same result).
+- `DELETE` is typically idempotent (deleting an already-deleted resource still results in "not found").
+- However, implementation details matter: if `PUT` performs side effects (e.g., incrementing counters) or `DELETE` has non-idempotent behavior, treat them as non-idempotent and require `Idempotency-Key` for safe retries.
+- Check your API documentation to determine whether a specific endpoint is truly idempotent before retrying the Tier 1 status codes above for `PUT`/`DELETE`.
+
+**Tier 3 — Neither safe nor idempotent (`POST`, `PATCH`): retry only with `Idempotency-Key`.**
+
+- **Only retry if** the request includes an `Idempotency-Key` header.
+- Without `Idempotency-Key`, retrying may cause duplicate operations (double charges, duplicate resources, etc.).
 
 **Retry Strategy Best Practices:**
 

@@ -27,7 +27,7 @@ git config --global format.signoff true
 2. Add remotes locally (replace <org> with the upstream organization):
    ```bash
    git remote set-url origin git@github.com:myfork/DNA.git
-   git remote add upstream git@github.com:cyberfabric/DNA.git
+   git remote add upstream git@github.com:constructorfabric/DNA.git
    git fetch upstream
    git checkout main && git reset --hard upstream/main
    ```

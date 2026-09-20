@@ -19,6 +19,7 @@ This file contains Rust-specific guidance and examples.
 ```rust
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use utoipa::ToSchema;
 use uuid::Uuid; // enable the v7 feature in Cargo.toml
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -80,7 +81,7 @@ pub struct ValidationError {
 
 ## axum Handler with utoipa
 ```rust
-use axum::{extract::Query, http::HeaderMap, response::{IntoResponse, Json}, Json};
+use axum::{extract::Query, http::HeaderMap, response::{IntoResponse, Json}};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::{IntoParams, ToSchema};
@@ -171,7 +172,9 @@ use std::time::Duration;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde(with = "modkit_utils::humantime_serde::option", default)]
-    pub timeout: Duration
+    pub timeout: Option<Duration>
 }
 ```
+- Note: applying `#[serde(default)]` to a bare `Duration` (rather than `Option<Duration>`) yields a default of **zero**, which is a dangerous default for a timeout field.
+- `modkit_utils` is an internal crate; the public equivalent is the [`humantime-serde`](https://crates.io/crates/humantime-serde) crate.
 - This allows configuration files to use readable formats like `timeout = "30s"` or `retry_interval = "5m"` instead of raw milliseconds or seconds.

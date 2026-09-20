@@ -95,7 +95,7 @@ Define ordering using standardized field tokens. By default, only `created_at` a
   - Required unique tiebreaker in all canonical sorts.
   - Comparison: lexicographic on canonical UUID string. With UUIDv7, lexicographic order preserves creation-time ordering.
   - Format: lowercase hyphenated UUIDv7 string.
-// Additional ordering fields may be defined per-endpoint; they must be indexed, documented, and accompanied by clear comparison semantics.
+Additional ordering fields may be defined per-endpoint; they must be indexed, documented, and accompanied by clear comparison semantics.
 
 Field comparison semantics:
 - Strings: compare using defined collation; default is case-insensitive NFKC with `en-US` unless endpoint specifies otherwise.
@@ -432,7 +432,7 @@ ORDER BY created_at ASC, id ASC
 ## Do’s and Don’ts
 
 - **Do** include a unique tiebreaker in the sort.
-- **Do** over-fetch by one to compute existance of a next page.
+- **Do** over-fetch by one to compute existence of a next page.
 - **Do** validate that filters/sort match what the cursor encodes.
 - **Don’t** expose database IDs or raw fields as cursors; keep them opaque and versioned.
 - **Don’t** provide `total_count` in cursor pagination.

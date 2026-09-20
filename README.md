@@ -19,6 +19,13 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - Core API rules (any stack): see [API.md](./REST/API.md)
 - Backend (Rust) specifics (optional): see [RUST.md](./languages/RUST.md)
 - Frontend (React) usage patterns (optional): see [REACT.md](./languages/REACT.md)
+- Cursor-based pagination contract: see [QUERYING.md](./REST/QUERYING.md)
+- HTTP status and application error codes: see [STATUS_CODES.md](./REST/STATUS_CODES.md)
+- Batch and bulk operation endpoints: see [BATCH.md](./REST/BATCH.md)
+- API versioning and deprecation practices: see [VERSIONING.md](./REST/VERSIONING.md)
+- Public library interface design (SDKs, packages, modules): see [PLID.md](./public-interface/PLID.md)
+- PlantUML diagram style conventions: see [PlantUML.md](./diagrams/PlantUML.md)
+- Contribution workflow and DCO sign-off: see [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Key Decisions & Defaults
 - **JSON**: snake_case; lists use `{ items, page_info }`, single objects unwrapped; omit absent fields (avoid nulls)
@@ -40,7 +47,7 @@ Keep DNA guidelines synchronized across projects:
 
 ```bash
 # Add DNA as a submodule to your project
-git submodule add https://github.com/cyberfabric/DNA.git docs/DNA
+git submodule add https://github.com/constructorfabric/DNA.git docs/DNA
 git submodule update --init
 
 # Reference the guidelines in your project
@@ -52,8 +59,8 @@ For standalone projects or when you need customized versions:
 
 ```bash
 # Copy the guidelines you need
-curl -o API_GUIDELINES.md https://raw.githubusercontent.com/cyberfabric/DNA/main/REST/API.md
-curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/cyberfabric/DNA/main/languages/RUST.md
+curl -o API_GUIDELINES.md https://raw.githubusercontent.com/constructorfabric/DNA/main/REST/API.md
+curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/constructorfabric/DNA/main/languages/RUST.md
 ```
 
 ### Step-by-Step Implementation
@@ -206,7 +213,7 @@ jobs:
 
 ## References
 - Problem Details (RFC 9457): https://www.rfc-editor.org/rfc/rfc9457
-- RateLimit Fields (RFC 9239): https://www.rfc-editor.org/rfc/rfc9239
+- RateLimit header fields (IETF draft, rev 11 — field syntax has changed across revisions; re-verify before implementing): https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
 - W3C Trace Context: https://www.w3.org/TR/trace-context/
 - JSON Merge Patch (RFC 7396): https://www.rfc-editor.org/rfc/rfc7396
 - Sunset Header (RFC 8594): https://www.rfc-editor.org/rfc/rfc8594

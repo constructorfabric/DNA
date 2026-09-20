@@ -168,7 +168,7 @@ The top-level HTTP status code reflects the aggregate outcome:
 
 ## Error Format
 
-Each failed item receives **complete RFC 9457 Problem Details** for consistency with single-item error format (see [API.md#error-model](API.md#7-error-model-problem-details)).
+Each failed item receives **complete RFC 9457 Problem Details** for consistency with single-item error format (see [API.md §7 Error Model](API.md#7-error-model-problem-details)).
 
 ### Required Fields
 - `type` - Error type URL

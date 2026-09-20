@@ -115,7 +115,7 @@ When deprecating APIs, include these headers:
 
 ```http
 Deprecation: true
-Sunset: Sat, 31 Dec 2025 23:59:59 GMT
+Sunset: Wed, 31 Dec 2025 23:59:59 GMT
 Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
 ```
 
@@ -147,7 +147,7 @@ For deprecated endpoints, maintain functionality but add warnings via **HTTP hea
 ```http
 HTTP/1.1 200 OK
 Deprecation: true
-Sunset: Sat, 31 Dec 2025 23:59:59 GMT
+Sunset: Wed, 31 Dec 2025 23:59:59 GMT
 Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
 Content-Type: application/json
 
@@ -266,6 +266,8 @@ paths:
               example: false
 ```
 
+Note: the `Sunset` **header** uses the HTTP-date format (RFC 9110), while the `x-sunset` OpenAPI **extension** above uses ISO-8601; both express the same instant.
+
 ### Backward Compatibility Testing
 
 ```typescript
@@ -332,5 +334,5 @@ Before creating a new major version:
 ## References
 
 - [Semantic Versioning](https://semver.org/)
-- [RFC 8594 - The Sunset HTTP Header Field](https://tools.ietf.org/html/rfc8594)
-- [API Deprecation Guidelines](https://tools.ietf.org/html/draft-ietf-httpapi-deprecation-header)
+- [RFC 8594 - The Sunset HTTP Header Field](https://www.rfc-editor.org/rfc/rfc8594)
+- [API Deprecation Guidelines](https://datatracker.ietf.org/doc/draft-ietf-httpapi-deprecation-header/)

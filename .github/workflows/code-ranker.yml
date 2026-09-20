@@ -2,6 +2,7 @@ name: code-ranker
 on:
   pull_request:
   push:
+    branches: [main]
 jobs:
   code-ranker:
     # Pinned to an immutable commit SHA (supply-chain hardening); the trailing

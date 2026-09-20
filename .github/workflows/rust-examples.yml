@@ -1,0 +1,26 @@
+name: rust-examples
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  # Only permission needed — reads the checked-out files.
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v4` lets Dependabot bump the pin when a new release moves the v4 tag.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # ubuntu-latest ships a Rust toolchain preinstalled; no extra action needed.
+      - name: Extract fenced rust blocks from RUST.md
+        run: python3 ci/extract_rust_examples.py
+
+      - name: cargo check
+        run: cargo check --manifest-path ci/rust-examples/Cargo.toml
+
+      - name: cargo test
+        run: cargo test --manifest-path ci/rust-examples/Cargo.toml

@@ -20,7 +20,19 @@ A short list of guiding ideas the rest of this document elaborates. Every requir
 - **Documentation and examples are part of the contract.** Consumers copy examples verbatim and read item-level docs more often than they read source; treat both with the same discipline as code.
 - **Conform to the ecosystem.** Familiar conventions beat clever novelty.
 
+## Severity Levels
+
+Every requirement below is tagged `CRIT`, `MAJOR`, or `MINOR`. These tags are not decoration — they are the grading scale a review verdict is computed from.
+
+- **CRIT** — a violation blocks approval. The interface MUST NOT ship until it is resolved or an explicit, recorded exception is granted.
+- **MAJOR** — a violation MUST be resolved before the next release that exposes the interface publicly; it may be recorded as a tracked follow-up rather than blocking the review.
+- **MINOR** — a violation is recorded as advisory and does not block.
+
+A review verdict is the highest unresolved severity found. "No CRIT open" is the approval gate: a review with only MAJOR or MINOR findings open MAY be approved with tracked follow-ups, but a review with any open CRIT finding MUST NOT be approved. See the [Minimal Review/Approval Checklist](#minimal-reviewapproval-checklist) at the end of this document for the concrete set of checks a review applies before reaching that verdict.
+
 ## Table of Contents
+
+- [Severity Levels](#severity-levels)
 
 - **Part I — Contract Foundations**
   - [PLID-10 Public Contract Definition & Stability](#plid-10-public-contract-definition--stability)
@@ -87,6 +99,9 @@ Tiers:
 - **preview** — feature is stabilizing; breaking changes possible but unlikely before promotion to stable.
 - **experimental** — no compatibility promise; may be reshaped or removed at any minor release.
 - **deprecated** — discouraged; scheduled for removal in the next major version; migration path documented.
+- **retired** — no longer served; requests receive `410 Gone`.
+
+[`../REST/VERSIONING.md`](../REST/VERSIONING.md) applies these tiers to API versions.
 
 ## PLID-10.03 Compatibility Dimensions (CRIT)
 
@@ -145,7 +160,7 @@ Unit and precision bugs are common, expensive, and hard to notice in review. If 
 
 Use, in order of preference:
 
-- built-in or stdlib types where they exist (e.g., `time.Duration`/`time.Time` in Go, `std::time::Duration`/`chrono::DateTime` in Rust, `TimeSpan`/`DateTime`/`decimal` in .NET, `decimal.Decimal` in Python) — do not invent parallel types when the ecosystem already has a canonical one
+- built-in or stdlib types where they exist (e.g., `time.Duration`/`time.Time` in Go, `std::time::Duration` in Rust — see [`../languages/RUST.md`](../languages/RUST.md) for the DNA-mandated date-time crate, `TimeSpan`/`DateTime`/`decimal` in .NET, `decimal.Decimal` in Python) — do not invent parallel types when the ecosystem already has a canonical one
 - domain-specific wrapper types when no canonical stdlib type fits (e.g., `Money`, `Bytes`, `RequestsPerSecond`)
 - unit-bearing names (e.g., `timeoutMs`, `sizeBytes`) as a fallback when a wrapper type is impractical
 - explicit overflow, precision, and rounding rules documented at the boundary
@@ -244,7 +259,7 @@ Examples include:
 
 Public APIs should expose what consumers must rely on — and no more. Over-specifying behavior in types, signatures, or documentation locks the implementation: tomorrow's optimization, cache layer, retry strategy, or replacement backend becomes a breaking change. *"Keep APIs free of implementation details. They confuse users and inhibit the flexibility to evolve."* — Joshua Bloch.
 
-Document the guarantees consumers can build on (see PLID-42.03), and explicitly mark behaviors that are *not* part of the contract (ordering of debug fields, internal cache TTLs, exact retry counts, log message wording). When in doubt, under-specify rather than over-specify.
+Document the guarantees consumers can build on (see [PLID-42.03](#plid-4203-behavioral-documentation-crit)), and explicitly mark behaviors that are *not* part of the contract (ordering of debug fields, internal cache TTLs, exact retry counts, log message wording). When in doubt, under-specify rather than over-specify.
 
 
 # PLID-21 Governance, Versioning & Release Discipline
@@ -330,6 +345,8 @@ Note: prefer small, composable contracts over large inheritance-style hierarchie
 # PLID-31 Cross-Language & Wire Contracts
 
 If multiple languages, runtimes, processes, or generators consume the interface, portability becomes part of the contract.
+
+For HTTP APIs, the concrete DNA contract is [`../REST/API.md`](../REST/API.md) §4 (JSON Conventions).
 
 ## PLID-31.01 Stable Serialization Rules (CRIT)
 
@@ -539,6 +556,8 @@ Provide builders, fakes, fixtures, or test-support packages for common downstrea
 
 Errors are first-class interface surface and must be designed deliberately.
 
+For HTTP APIs, the concrete DNA contract is [`../REST/STATUS_CODES.md`](../REST/STATUS_CODES.md) as the error-code registry and [`../REST/API.md`](../REST/API.md) §7 as the wire format.
+
 ## PLID-50.01 Actionable Error Taxonomy (CRIT)
 
 One opaque failure type forces consumers to guess and often handle errors incorrectly. Consumers must be able to distinguish failures that require different handling.
@@ -639,7 +658,7 @@ Make unsafe combinations visible at the call site through explicit naming, annot
 
 ## PLID-51.06 Serialization versus Parallelism Choices (MINOR)
 
-Consumers need to know whether contention is a design decision or an accidental bottleneck.If the interface intentionally serializes work, state that and explain why.
+Consumers need to know whether contention is a design decision or an accidental bottleneck. If the interface intentionally serializes work, state that and explain why.
 
 
 # PLID-52 Performance & Resource Contracts
@@ -700,6 +719,8 @@ Document at minimum:
 - deleted-row behavior, including whether removals can cause skips, short pages, invalid cursors, or reflow of later results
 - sort guarantees, including the exact ordering fields, tie-break rules, and whether the order is total and stable across requests
 
+For HTTP APIs, the concrete DNA contract is [`../REST/QUERYING.md`](../REST/QUERYING.md).
+
 
 # PLID-53 Observability & Operational Readiness
 
@@ -741,13 +762,13 @@ For public types, ensure:
 
 - debug representation is non-empty and identifies the type meaningfully
 - display representation, when provided, is stable and user-facing
-- secrets and regulated data are redacted in both (see PLID-10.02)
+- secrets and regulated data are redacted in both (see [PLID-53.02](#plid-5302-sensitive-data-safety-crit))
 - representations do not accidentally become a parsed contract; if structured access is needed, expose explicit accessors
 
 
 # PLID-54 Security Boundaries & Hazardous Operations
 
-Security guidance is most useful when it focuses on authority boundaries and high-risk actions rather than repeating the general misuse-resistance rules already covered by PLID-11 and PLID-41.
+Security guidance is most useful when it focuses on authority boundaries and high-risk actions rather than repeating the general misuse-resistance rules already covered by [PLID-11](#plid-11-meaningful-types--misuse-resistant-modeling) and [PLID-41](#plid-41-validation-safe-defaults--construction).
 
 ## PLID-54.01 Least-Privilege Surface Design (CRIT)
 

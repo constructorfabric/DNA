@@ -1,0 +1,25 @@
+name: doc-invariants
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  # Only permission needed — reads the checked-out files.
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v4` lets Dependabot bump the pin when a new release moves the v4 tag.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Checks that the examples in the documents obey the norms the documents state:
+      # cursor tokens decode as valid v2 cursors, documented hashes match
+      # sha256(normalized)[0:12], Sunset weekdays agree with their dates, Deprecation
+      # uses RFC 9745 form, response timestamps carry .SSS, every Problem Details
+      # `code` is in the STATUS_CODES.md registry, no retired-org URLs, no orphan
+      # documents. Every one of these was a defect found by hand review once already.
+      - name: Verify document examples against the norms they illustrate
+        run: python3 ci/verify_doc_examples.py

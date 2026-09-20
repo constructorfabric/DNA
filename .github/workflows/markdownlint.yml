@@ -1,0 +1,22 @@
+name: markdownlint
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  # Only permission needed — reads the checked-out files.
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v4` lets Dependabot bump the pin when a new release moves the v4 tag.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # markdownlint-cli2 is not installed in this repo (no Node toolchain);
+      # npx fetches it into a throwaway cache for this run only, so nothing is
+      # installed globally. Rules live in .markdownlint-cli2.jsonc at the repo root.
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2 "**/*.md"

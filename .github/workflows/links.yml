@@ -1,0 +1,29 @@
+name: links
+on:
+  pull_request:
+  schedule:
+    # External link rot (e.g. an org rename) happens with no PR to catch it,
+    # so this also runs weekly against main independent of any pull request.
+    - cron: "0 6 * * 1"
+permissions:
+  # Only permission needed — reads the checked-out files.
+  contents: read
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v4` lets Dependabot bump the pin when a new release moves the v4 tag.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check links
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v2.9.0` lets Dependabot bump the pin when a new release moves the tag.
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --no-progress
+            --exclude-loopback
+            "**/*.md"
+          fail: true

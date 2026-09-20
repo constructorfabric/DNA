@@ -3,12 +3,26 @@
 **Complete specification for creating beautiful, readable PlantUML diagrams**
 
 ## Table of Contents
-1. [Color Scheme](#color-schemes)
-2. [Complete Template](#complete-template)
-3. [Component Colors](#component-colors)
-4. [Grouping Examples](#grouping-examples)
-5. [Configuration Settings](#configuration-settings)
-6. [Rules and Best Practices](#rules-and-best-practices)
+1. [Scope and Placement](#scope-and-placement)
+2. [Color Scheme](#color-schemes)
+3. [Complete Template](#complete-template)
+4. [Component Colors](#component-colors)
+5. [Grouping Examples](#grouping-examples)
+6. [Configuration Settings](#configuration-settings)
+7. [Rules and Best Practices](#rules-and-best-practices)
+
+---
+
+## Scope and Placement
+
+This guide covers **component diagrams** only. Other PlantUML diagram kinds (sequence,
+deployment, state, C4, etc.) are out of scope for now.
+
+Diagram sources MUST live in the consuming repository at `docs/diagrams/*.puml`, versioned
+alongside the code they describe. Rendered output (SVG/PNG) is generated in CI and MUST NOT
+be committed to the repository.
+
+See the [repository README](../README.md) for how this document fits into the rest of DNA.
 
 ---
 
@@ -16,11 +30,13 @@
 
 ### 🎨 Universal Color Rule
 
-**IMPORTANT:** Text color must contrast with background color:
-- **Bright/Light backgrounds** → Use **Black text** (`#000000`)
-- **Dark/Muted backgrounds** → Use **White text** (`#FFFFFF`)
+**REQUIRED:** Text/background contrast MUST be at least **4.5:1** (WCAG 2.1 AA, normal
+text). Every color pairing in this document has been measured against that threshold:
+- **Light/bright backgrounds** generally need **Black text** (`#000000`) to clear 4.5:1.
+- **Dark/saturated backgrounds** generally need **White text** (`#FFFFFF`) to clear 4.5:1.
 
-Apply this rule to ALL components in ALL themes.
+The 4.5:1 threshold — not a "bright vs. dark" guess — is what decides the Text Color column
+for every palette below. Apply this rule to ALL components in ALL themes.
 
 ---
 
@@ -28,25 +44,31 @@ Apply this rule to ALL components in ALL themes.
 
 | Component Type | Color | Hex | Text Color | Usage |
 |---------------|-------|-----|------------|-------|
-| **Type A** | Steel Blue | `#6B8CAE` | White `#FFFFFF` | Client-facing components |
-| **Type B** | Sage Green | `#7D9B7D` | White `#FFFFFF` | Processing components |
-| **Type C** | Slate Purple | `#8B7B9B` | White `#FFFFFF` | Storage components |
-| **Type D** | Warm Grey | `#B8A992` | White `#FFFFFF` | Temporary storage components |
-| **Type E** | Dusty Rose | `#B88B96` | White `#FFFFFF` | Async communication components |
-| **Type F** | Cool Grey | `#7A8A94` | White `#FFFFFF` | Supporting components |
-| **Type G** | Teal Grey | `#6E9488` | White `#FFFFFF` | External/third-party components |
+| **Type A** | Steel Blue | `#6B8CAE` | Black `#000000` | Client-facing components |
+| **Type B** | Sage Green | `#7D9B7D` | Black `#000000` | Processing components |
+| **Type C** | Slate Purple | `#8B7B9B` | Black `#000000` | Storage components |
+| **Type D** | Warm Grey | `#B8A992` | Black `#000000` | Temporary storage components |
+| **Type E** | Dusty Rose | `#B88B96` | Black `#000000` | Async communication components |
+| **Type F** | Cool Grey | `#7A8A94` | Black `#000000` | Supporting components |
+| **Type G** | Teal Grey | `#6E9488` | Black `#000000` | External/third-party components |
 
-**Rule:** These muted colors are dark enough that white text provides better contrast and readability.
+**Rule:** Measured against black text, all seven colors clear the 4.5:1 threshold (5.40–9.13:1);
+measured against white text, all seven fail it (2.30–3.89:1). Black is therefore the only
+compliant Text Color for this palette. Note that the Complete Template's `skinparam component`
+block sets `FontColor #212121` (near-black) for every component; a per-component `#hex` after
+`as <alias>` overrides the background only, never the font color, so the shipped template was
+already rendering dark text — this table's earlier "White" guidance was the error, not the
+template.
 
 ### Group Background Colors
 
 | Group | Background | Border | Text Color |
 |-------|-----------|--------|------------|
-| **Layer 1** | `#E7EDF2` | `#6B8CAE` | White |
-| **Layer 2** | `#EBF0EB` | `#7D9B7D` | White |
-| **Layer 3** | `#EEEAF0` | `#8B7B9B` | White |
-| **Layer 4** | `#EBEDEF` | `#7A8A94` | White |
-| **Layer 5** | `#EBF0EE` | `#6E9488` | White |
+| **Layer 1** | `#E7EDF2` | `#6B8CAE` | Black `#000000` |
+| **Layer 2** | `#EBF0EB` | `#7D9B7D` | Black `#000000` |
+| **Layer 3** | `#EEEAF0` | `#8B7B9B` | Black `#000000` |
+| **Layer 4** | `#EBEDEF` | `#7A8A94` | Black `#000000` |
+| **Layer 5** | `#EBF0EE` | `#6E9488` | Black `#000000` |
 
 ### Dark Theme - Chalkboard Style (like in the image)
 
@@ -73,9 +95,13 @@ Different arrow styles for different types of connections:
 | Arrow Type | Syntax | Usage |
 |-----------|--------|-------|
 | **Solid** | `-->` | Synchronous calls, direct dependencies |
-| **Dashed** | `..>` | Async calls, optional dependencies |
+| **Dashed** | `-[dashed]->` | Async calls, optional dependencies |
 | **Bold** | `==>` | Primary data flow |
-| **Dotted** | `~~>` | Weak dependencies, notifications |
+| **Dotted** | `-[dotted]->` | Weak dependencies, notifications |
+
+`~~>` is not documented PlantUML component-diagram syntax and MUST NOT be used. `..>`
+renders **dotted**, not dashed, despite its visual resemblance to a dash — use `-[dashed]->`
+when a genuinely dashed line is required.
 
 ---
 
@@ -94,6 +120,8 @@ skinparam backgroundColor white
 skinparam handwritten false
 skinparam monochrome false
 skinparam linetype ortho
+' ^ RECOMMENDED, not required. If ortho tangles or fails on a large diagram, fall back to
+'   `skinparam linetype polyline` or omit the line (see "Rules and Best Practices #1").
 skinparam roundcorner 5
 skinparam shadowing false
 skinparam componentStyle rectangle
@@ -101,17 +129,13 @@ skinparam componentStyle rectangle
 ' ============================================
 ' SPACING (prevents arrows overlapping text)
 ' ============================================
-' Small diagrams (< 15 components):
-skinparam nodesep 100
-skinparam ranksep 120
-skinparam padding 15
-skinparam margin 25
-
-' Large diagrams (> 30 components):
-' skinparam nodesep 80
-' skinparam ranksep 100
-' skinparam padding 12
-' skinparam margin 20
+' See the "Configuration Settings" section for the canonical nodesep/ranksep/padding/margin
+' values by diagram size (Small < 15, Medium 15-30, Large > 30 components). Defaults below
+' match "Small Diagrams (< 15 components)" — swap in the values for your diagram's size.
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam padding 10
+skinparam margin 20
 
 ' ============================================
 ' COMPONENT STYLE
@@ -212,8 +236,8 @@ comp_b2 .right.> comp_d1
 comp_b3 .right.> comp_d1
 
 ' Dotted arrows for async communication
-comp_b2 ~~down~~> comp_e1
-comp_b3 ~~down~~> comp_e1
+comp_b2 -[dotted]down-> comp_e1
+comp_b3 -[dotted]down-> comp_e1
 
 ' Dashed arrows for monitoring
 comp_f1 .down.> comp_b2
@@ -326,6 +350,7 @@ component [Component B3] as comp_b3 #7FFF00;line:white;text:black
 
 ' Type C - Storage (purple with white text)
 database [Storage C1] as storage_c1
+database [Storage C2] as storage_c2
 
 ' Type D - Temporary storage (orange with black text)
 component [Component D1] as comp_d1 #FF9500;line:white;text:black
@@ -358,8 +383,8 @@ comp_b2 .right.> comp_d1
 comp_b3 .right.> comp_d1
 
 ' Dotted arrows for async communication
-comp_b2 ~~down~~> comp_e1
-comp_b3 ~~down~~> comp_e1
+comp_b2 -[dotted]down-> comp_e1
+comp_b3 -[dotted]down-> comp_e1
 
 ' Dashed arrows for monitoring
 comp_f1 .down.> comp_b2
@@ -554,7 +579,7 @@ skinparam rectangle {
 ' ============================================
 ' GROUP: LAYER 1
 ' ============================================
-rectangle "Layer 1" #E8EEF3 {
+rectangle "Layer 1" #E7EDF2 {
     component [Component A1] as comp_a1 #6B8CAE
     component [Component A2] as comp_a2 #6B8CAE
     component [Component A3] as comp_a3 #6B8CAE
@@ -563,7 +588,7 @@ rectangle "Layer 1" #E8EEF3 {
 ' ============================================
 ' GROUP: LAYER 2
 ' ============================================
-rectangle "Layer 2" #EDF3EF {
+rectangle "Layer 2" #EBF0EB {
     component [Component B1] as comp_b1 #7D9B7D
     component [Component B2] as comp_b2 #7D9B7D
     component [Component B3] as comp_b3 #7D9B7D
@@ -573,7 +598,7 @@ rectangle "Layer 2" #EDF3EF {
 ' ============================================
 ' GROUP: LAYER 3
 ' ============================================
-rectangle "Layer 3" #F0EDF3 {
+rectangle "Layer 3" #EEEAF0 {
     database [Storage C1] as storage_c1
     database [Storage C2] as storage_c2
     database [Storage C3] as storage_c3
@@ -583,7 +608,7 @@ rectangle "Layer 3" #F0EDF3 {
 ' ============================================
 ' GROUP: LAYER 4
 ' ============================================
-rectangle "Layer 4" #ECEEF0 {
+rectangle "Layer 4" #EBEDEF {
     component [Component F1] as comp_f1 #7A8A94
     component [Component F2] as comp_f2 #7A8A94
     component [Component E1] as comp_e1 #B88B96
@@ -592,7 +617,7 @@ rectangle "Layer 4" #ECEEF0 {
 ' ============================================
 ' GROUP: LAYER 5
 ' ============================================
-rectangle "Layer 5" #EDF2F0 {
+rectangle "Layer 5" #EBF0EE {
     component [Component G1] as comp_g1 #6E9488
     component [Component G2] as comp_g2 #6E9488
     component [Component G3] as comp_g3 #6E9488
@@ -719,7 +744,14 @@ skinparam arrow {
 skinparam backgroundColor white
 skinparam linetype ortho
 skinparam componentStyle rectangle
+@enduml
 ```
+
+`skinparam linetype ortho` is RECOMMENDED, not required — PlantUML ignores it for some
+diagram types and it can fail to route large graphs cleanly, which collides with the
+">30 components" guidance in [Configuration Settings](#configuration-settings). If `ortho`
+tangles or fails to render on a large diagram, fall back to `skinparam linetype polyline`
+or omit the line to use PlantUML's default routing.
 
 ### 2. Component Colors
 - **Always specify color** after `as`: `component [Name] as alias #COLOR`
@@ -757,7 +789,7 @@ skinparam componentStyle rectangle
 Before publishing, verify:
 
 - [ ] Uses `!theme plain`
-- [ ] Set `skinparam linetype ortho`
+- [ ] `skinparam linetype ortho` is set (RECOMMENDED; fall back to `polyline` or the default routing if it tangles or fails on a large diagram)
 - [ ] Configured `nodesep` and `ranksep`
 - [ ] All components have colors
 - [ ] Colors match component type
@@ -789,7 +821,7 @@ Before publishing, verify:
 
 ### Key Points
 
-1. **Color Scheme**: Material Design palette (7 colors)
+1. **Color Scheme**: Custom muted engineering palette (7 colors)
 2. **No Arrow Labels**: Use notes for descriptions
 3. **Directed Arrows**: `-down->`, `-right->`, `-up->`, `-left->`
 4. **Grouping**: `rectangle` with light backgrounds
@@ -799,8 +831,8 @@ Before publishing, verify:
 
 - Type A (Client-facing): `#6B8CAE` (Muted Blue)
 - Type B (Processing): `#7D9B7D` (Muted Green)
-- Type C (Storage): `#9B87B3` (Muted Purple)
-- Type D (Temporary storage): `#B8A992` (Muted Orange)
+- Type C (Storage): `#8B7B9B` (Muted Purple)
+- Type D (Temporary storage): `#B8A992` (Warm Grey)
 - Type E (Async communication): `#B88B96` (Muted Pink)
 - Type F (Supporting): `#7A8A94` (Steel Grey)
 - Type G (External): `#6E9488` (Muted Teal)
@@ -826,5 +858,5 @@ comp_b -down-> storage_c
 
 ---
 
-**That's it! Copy, modify, and create beautiful diagrams!** 🎉
+This specification is complete. Apply it consistently across all component diagrams in the repository.
 

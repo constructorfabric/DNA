@@ -14,10 +14,11 @@
 
 - [ ] Commits are signed off (`git commit -s`)
 - [ ] Changes follow DNA principles
-- [ ] Code examples tested
-- [ ] Links are valid
+- [ ] Rust examples compile and pass (verified by the `rust-examples` check)
+- [ ] Links resolve (verified by the `links` check)
+- [ ] New documents are linked from README.md §Start Here
 - [ ] Self-review completed
 
 ## Related Issues
 
-Closes #
+Closes #<!-- issue number -->

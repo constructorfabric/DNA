@@ -1,0 +1,33 @@
+{
+  // Conservative rule set: keep the structural rules (heading order, list
+  // formatting, unique content) and turn off the ones that would fail on
+  // patterns this corpus already uses deliberately.
+  "config": {
+    "default": true,
+
+    // Line length is not a useful signal in a docs corpus with long tables,
+    // URLs, and JSON examples.
+    "MD013": false,
+
+    // Angle-bracket placeholders (`<tag>`, `<action>`, `<resource>:<action>`)
+    // are used as prose placeholders throughout the REST/*.md guides and are
+    // not raw HTML.
+    "MD033": false,
+
+    // Several documents (e.g. REST/QUERYING.md, REST/STATUS_CODES.md) open
+    // with a heading below H1 because they are included as sub-sections of a
+    // larger spec; enforcing H1-first would fail on files this pass does not
+    // own.
+    "MD041": false,
+
+    // Makefile snippets require literal tabs for recipe lines; only flag hard
+    // tabs outside fenced code blocks.
+    "MD010": { "code_blocks": false },
+
+    // Repeated headings (e.g. "Type A" under both "Light Theme" and "Dark
+    // Theme") are legitimate when they have different parents.
+    "MD024": { "siblings_only": true }
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "ci/rust-examples/target/**"]
+}

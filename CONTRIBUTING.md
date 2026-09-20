@@ -27,7 +27,7 @@ git config --global format.signoff true
 2. Add remotes locally (replace <org> with the upstream organization):
    ```bash
    git remote set-url origin git@github.com:myfork/DNA.git
-   git remote add upstream git@github.com:cyberfabric/DNA.git
+   git remote add upstream git@github.com:constructorfabric/DNA.git
    git fetch upstream
    git checkout main && git reset --hard upstream/main
    ```
@@ -48,6 +48,8 @@ git config --global format.signoff true
 - One PR = one topic. Avoid mixing structural/spec changes with editorial or infrastructure changes.
 - Keep diffs minimal; prefer multiple small PRs over one large one.
 - If you change headings/anchors, update any in-document links accordingly.
+- No orphan documents: every new document MUST be linked from `README.md` §Start Here. CI
+  enforces this.
 
 Suggested categories:
 - `ci/compliance`: DCO, workflows, PR templates
@@ -77,7 +79,12 @@ Before submitting your PR, please verify:
 
 ## 6) Review & Merge
 
-- Automated checks (e.g., DCO) must pass
+- All automated checks are required and must pass before merge:
+  - **DCO** — every commit carries a `Signed-off-by:` trailer
+  - **Links** — every link in every Markdown file resolves (`lychee`)
+  - **Rust examples** — every fenced `rust` block in `RUST.md` compiles and its tests pass
+  - **Markdown lint** — structural Markdown rules (`markdownlint-cli2`)
+  - **PlantUML render** — every fenced `plantuml` block in `PlantUML.md` renders without error
 - A maintainer will review for clarity, scope, and alignment with DNA principles
 - Address feedback via follow-up commits in the same branch
 - Squash merge is recommended for documentation-only PRs

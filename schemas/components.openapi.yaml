@@ -1,0 +1,147 @@
+# Shared OpenAPI 3.1 components fragment.
+#
+# API.md §20 says "keep schemas DRY via shared components" and gives every consumer nothing to
+# $ref — this file is that thing. Consumers merge this under their own document's `components:`
+# key (or reference it via `$ref: 'components.openapi.yaml#/components/schemas/PageInfo'` etc. —
+# see schemas/README.md for the exact mechanics) instead of retyping any of the shapes below.
+#
+# OpenAPI 3.1 uses the JSON Schema 2020-12 dialect, so `Problem` below is a direct external
+# `$ref` to problem.schema.json rather than a retyped copy — one definition, not two that can
+# drift apart.
+
+openapi: 3.1.0
+info:
+  title: DNA shared components
+  version: "1.0.0"
+  description: >
+    Not a deployable API document. Import the `components` object below into a real OpenAPI
+    document and $ref its members.
+
+components:
+  schemas:
+    Problem:
+      $ref: './problem.schema.json'
+
+    ValidationError:
+      type: object
+      description: >
+        Shape of one entry in Problem's `errors[]` array (API.md §7). Exposed here as its own
+        schema so operations that surface field-level validation outside of a Problem body
+        (e.g. a batch item's inline `error`, per BATCH.md) can $ref the same shape.
+      properties:
+        field:
+          type: string
+          description: Dot-path to the offending field, e.g. `email` or `items[2].sku`.
+        code:
+          type: string
+          description: Field-level validation code, e.g. `format`, `required`, `max_length`.
+        message:
+          type: string
+          description: English diagnostic for this field. MUST NOT be shown to end users verbatim.
+      required: [field, code, message]
+      additionalProperties: false
+
+    PageInfo:
+      type: object
+      description: >
+        Cursor pagination metadata (QUERYING.md). MUST NOT carry `total_count` (DECISIONS.md
+        D14) — use the sanctioned `GET /resources:count` endpoint instead.
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+          description: Effective page size for this response. See CONSTANTS.md for the bounds.
+        next_cursor:
+          type: string
+          nullable: true
+          description: >
+            Opaque, versioned cursor (v2 — DECISIONS.md D3). Present when a next page exists;
+            its presence, not a separate flag, is the "has more" signal (D14).
+        prev_cursor:
+          type: string
+          nullable: true
+          description: Opaque, versioned cursor for backward navigation (DECISIONS.md D3/D4).
+      required: [limit]
+      additionalProperties: false
+
+  parameters:
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      description: >
+        Number of items to return. Default, min and max are defined once in CONSTANTS.md
+        (`DEFAULT_LIMIT`, `MIN_LIMIT`, `MAX_LIMIT`); out-of-range values are rejected with
+        `422 INVALID_LIMIT`, never clamped.
+      schema:
+        type: integer
+        default: 25
+        minimum: 1
+        maximum: 200
+
+    CursorParam:
+      name: cursor
+      in: query
+      required: false
+      description: >
+        Opaque, versioned (v2) cursor returned by a previous response's `page_info`. Clients
+        MUST treat it as opaque. See QUERYING.md for the decoded shape and validation rules.
+      schema:
+        type: string
+
+    FilterParam:
+      name: $filter
+      in: query
+      required: false
+      description: >
+        OData-style filter expression restricted to this endpoint's allowlisted, indexed
+        fields and operators. Each operation using this parameter MUST also declare its own
+        `x-odata-filter.allowedFields` map (see QUERYING.md), because the allowlist is
+        endpoint-specific and cannot live in this shared fragment. Example shape to add on the
+        operation:
+        ```yaml
+        x-odata-filter:
+          allowedFields:
+            created_at: [ge, gt, le, lt, eq]
+            id: [eq, in]
+        ```
+      schema:
+        type: string
+
+    OrderByParam:
+      name: $orderby
+      in: query
+      required: false
+      description: >
+        Comma-separated OData ordering, restricted to allowlisted, indexed fields and
+        directions. Each operation using this parameter MUST also declare its own
+        `x-odata-orderby.allowedFields` list (see QUERYING.md):
+        ```yaml
+        x-odata-orderby:
+          allowedFields:
+            - created_at desc
+            - created_at asc
+            - id asc
+        ```
+      schema:
+        type: string
+        example: "created_at desc, id desc"
+
+    SelectParam:
+      name: $select
+      in: query
+      required: false
+      description: >
+        Comma-separated sparse field selection, no whitespace, case-sensitive (QUERYING.md
+        Field Projection). Max fields per request is defined once in CONSTANTS.md. Each
+        operation's response schema SHOULD carry its own `x-odata-select` vendor extension:
+        ```yaml
+        x-odata-select:
+          defaultFields: [id, title, status, created_at]
+          allowedFields: [id, title, description, status, created_at, updated_at]
+          maxFields: 50
+        ```
+      schema:
+        type: string
+        example: "id,title,status"

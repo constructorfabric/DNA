@@ -1,0 +1,139 @@
+# Spectral ruleset encoding the norms of this guideline that are mechanically checkable.
+#
+# Every rule below is `severity: error`. A warning-level rule is a rule that will never be
+# enforced — see [CHECKLIST.md](../REST/CHECKLIST.md), whose "machine-checked" column
+# corresponds to the rule names here exactly. If you rename or remove a rule, update that
+# checklist in the same change.
+#
+# Run: npx --yes @stoplight/spectral-cli lint openapi.json --ruleset schemas/spectral.yaml --fail-severity warn
+
+extends: []
+
+rules:
+  # API.md §4 — JSON Conventions: naming
+  dna-snake-case-properties:
+    description: JSON property names MUST be snake_case (API.md §4).
+    message: "'{{property}}' is not snake_case"
+    severity: error
+    given: "$..properties[*]~"
+    then:
+      function: casing
+      functionOptions:
+        type: snake
+
+  # API.md §3 / §13, DECISIONS.md D11 — response timestamp precision
+  dna-timestamp-millis-example:
+    description: >
+      Example values for timestamp-shaped properties (name ends in `_at`) MUST show exactly
+      three fractional digits and `Z` (API.md §3, DECISIONS.md D11).
+    message: "'{{property}}' example does not match the required .SSS UTC format"
+    severity: error
+    given: "$..properties[?(@property.match(/_at$/i))]"
+    then:
+      field: example
+      function: pattern
+      functionOptions:
+        match: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+
+  # API.md §4 — list envelope shape
+  dna-list-envelope-shape:
+    description: >
+      List response schemas MUST use the `items` + `page_info` envelope, not a bare array or a
+      different wrapper (API.md §4).
+    message: "List response schema defines 'items' without 'page_info', or vice versa"
+    severity: error
+    given: "$.paths[*][*].responses[*].content[application/json]"
+    then:
+      field: schema
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              properties:
+                type: object
+                required: ["items"]
+            required: ["properties"]
+          then:
+            properties:
+              properties:
+                type: object
+                required: ["items", "page_info"]
+            required: ["properties"]
+
+  # API.md §7, RFC 9457 — error content type
+  dna-problem-json-on-error-responses:
+    description: Every 4xx/5xx response MUST use `application/problem+json` (API.md §7), except the batch envelope exception documented in API.md §7 "Batch exception".
+    message: "Response for status {{property}} does not declare application/problem+json content"
+    severity: error
+    given: "$.paths[*][*].responses[?(@property.match(/^[45]/))]"
+    then:
+      field: content.application/problem+json
+      function: truthy
+
+  # DECISIONS.md D6 — required top-level `code`
+  dna-problem-requires-code:
+    description: Every Problem Details response schema MUST require the top-level `code` member (DECISIONS.md D6).
+    message: "Problem Details schema does not list 'code' as required"
+    severity: error
+    given: "$.paths[*][*].responses[*].content[application/problem+json].schema"
+    then:
+      field: required
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          contains:
+            const: code
+
+  # API.md Operational Headers (Quick Reference) — required response headers
+  dna-operational-headers-present:
+    description: Every successful response MUST expose the operational headers (API.md, Operational Headers Quick Reference; DECISIONS.md D9).
+    message: "2xx response is missing the '{{property}}' operational header"
+    severity: error
+    given: "$.paths[*][*].responses[?(@property.match(/^2/))]"
+    then:
+      - field: headers.X-Trace-Id
+        function: truthy
+      - field: headers.RateLimit
+        function: truthy
+      - field: headers.RateLimit-Policy
+        function: truthy
+
+  # QUERYING.md — per-endpoint $filter/$orderby allowlists
+  dna-collection-get-has-query-allowlists:
+    description: >
+      A GET operation that accepts `$filter` or `$orderby` MUST publish its allowlist via the
+      `x-odata-filter` / `x-odata-orderby` vendor extensions (QUERYING.md).
+    message: "GET operation accepts $filter/$orderby but does not declare its x-odata-filter/x-odata-orderby allowlist"
+    severity: error
+    given: "$.paths[*].get"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              parameters:
+                type: array
+                contains:
+                  type: object
+                  properties:
+                    name:
+                      enum: ["$filter", "$orderby"]
+                  required: ["name"]
+            required: ["parameters"]
+          then:
+            required: ["x-odata-filter", "x-odata-orderby"]
+
+  # DECISIONS.md D14 — total_count is banned
+  dna-no-total-count-in-page-info:
+    description: "`page_info` MUST NOT carry `total_count` (DECISIONS.md D14); use `GET /resources:count` instead."
+    message: "page_info schema declares a forbidden 'total_count' property"
+    severity: error
+    given: "$.components.schemas.PageInfo.properties"
+    then:
+      field: total_count
+      function: undefined

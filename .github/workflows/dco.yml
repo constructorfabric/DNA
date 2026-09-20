@@ -1,0 +1,43 @@
+name: dco
+on:
+  pull_request:
+permissions:
+  # Only permission needed — reads the PR's commit history.
+  contents: read
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v4` lets Dependabot bump the pin when a new release moves the v4 tag.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify every commit is signed off
+        run: |
+          set -euo pipefail
+
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+
+          missing=0
+          for commit in $(git log --format='%H' "${base}..${head}"); do
+            trailer=$(git log -1 --format='%(trailers:key=Signed-off-by,valueonly)' "${commit}")
+            if [ -z "${trailer}" ]; then
+              echo "::error::Commit ${commit} is missing a 'Signed-off-by:' trailer."
+              missing=1
+            fi
+          done
+
+          if [ "${missing}" -ne 0 ]; then
+            echo
+            echo "One or more commits are not signed off. Re-run with:"
+            echo "  git commit --amend -s   # for the last commit, or"
+            echo "  git rebase --signoff <base>   # to sign off a whole range"
+            echo "then force-push the branch."
+            exit 1
+          fi
+
+          echo "All commits are signed off."

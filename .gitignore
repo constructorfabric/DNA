@@ -19,18 +19,15 @@ docs/.vitepress/cache/
 # Node / npm / yarn / pnpm dependencies
 # ------------------------------------------------------
 node_modules/
-pnpm-lock.yaml
-yarn.lock
-package-lock.json
 
 # ------------------------------------------------------
 # Python virtual envs / Sphinx / MkDocs / Jupyter
 # ------------------------------------------------------
 venv/
 .env/
+.env
 __pycache__/
 *.pyc
-.DS_Store
 .ipynb_checkpoints/
 *.egg-info/
 
@@ -70,6 +67,17 @@ Desktop.ini
 .env.development.local
 .env.production.local
 .env.test.local
+
+# ------------------------------------------------------
+# Generated CI fixtures
+# ------------------------------------------------------
+# ci/rust-examples/src/lib.rs is generated from RUST.md's fenced rust blocks by
+# ci/extract_rust_examples.py; the compiled artifacts are never committed either.
+ci/rust-examples/target/
+ci/rust-examples/src/lib.rs
+# ci/plantuml-render/out/ is generated from PlantUML.md's fenced plantuml blocks
+# by ci/extract_plantuml.py, plus whatever the renderer writes beside them.
+ci/plantuml-render/
 
 # ------------------------------------------------------
 # Optional: build artifacts from documentation tools

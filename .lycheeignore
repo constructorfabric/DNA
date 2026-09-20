@@ -1,0 +1,6 @@
+# Lines are regular expressions matched against the full URL.
+# api.example.com and example.com are RFC 2606 reserved placeholder domains
+# used deliberately throughout the examples in this repository (e.g.
+# `https://api.example.com/v1/tickets`, `https://api.example.com/errors/...`).
+# They do not resolve to a real API and MUST NOT fail the link check.
+^https?://([a-zA-Z0-9-]+\.)*example\.com(/.*)?$

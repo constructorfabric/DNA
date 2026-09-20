@@ -15,33 +15,81 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - OpenAPI source-of-truth and client codegen (any backend/frontend)
 - Optional stack-specific recommendations: Rust backend and React frontend
 
+## Conventions
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT",
+"RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this repository are to be
+interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) and
+[RFC 8174](https://www.rfc-editor.org/rfc/rfc8174) when, and only when, they appear in all
+capitals, as shown here. Lowercase occurrences of these words (e.g. "must", "should") are
+ordinary prose and carry no normative weight.
+
 ## Start Here
-- Core API rules (any stack): see [API.md](./REST/API.md)
-- Backend (Rust) specifics (optional): see [RUST.md](./languages/RUST.md)
-- Frontend (React) usage patterns (optional): see [REACT.md](./languages/REACT.md)
+
+Every document in this repository, grouped by purpose. If you add a new document, link it
+here — an unlinked document is treated as an orphan and the link-check job will fail the PR.
+
+### Core
+- [API.md](./REST/API.md) — the core REST API guideline: protocol, JSON conventions, error
+  model, concurrency, auth, rate limiting, versioning, and more. Start here for any stack.
+- [QUERYING.md](./REST/QUERYING.md) — cursor pagination, `$filter`, `$orderby` and `$select`
+  in full detail.
+- [STATUS_CODES.md](./REST/STATUS_CODES.md) — the canonical HTTP status code and application
+  error code registry.
+- [BATCH.md](./REST/BATCH.md) — batch and bulk operation endpoints, request/response shapes,
+  and idempotency.
+- [CONSTANTS.md](./REST/CONSTANTS.md) — the single table of numeric constants (limits,
+  retention, caps) that every other document references instead of restating.
+- [AUTH.md](./REST/AUTH.md) — authentication and authorization details: token validation,
+  scopes, tenant isolation, and the 403-vs-404 decision.
+- [WEBHOOKS.md](./REST/WEBHOOKS.md) — outbound webhook delivery, signing, retries, and
+  subscription management.
+- [UPLOADS.md](./REST/UPLOADS.md) — file upload patterns: multipart vs pre-signed URLs, size
+  limits, and resumable uploads.
+- [VERSIONING.md](./REST/VERSIONING.md) — version lifecycle, stability tiers, breaking vs
+  non-breaking changes, and deprecation.
+
+### Reference
+- [CHECKLIST.md](./REST/CHECKLIST.md) — a conformance checklist, one line per checkable norm.
+- [PLID.md](./public-interface/PLID.md) — Public Interface Design principles that apply
+  across REST, events, and other public surfaces.
+- [PlantUML.md](./diagrams/PlantUML.md) — component diagram conventions, color palette, and
+  templates.
+
+### Language guides
+- [RUST.md](./languages/RUST.md) — backend (Rust) specifics (optional).
+- [REACT.md](./languages/REACT.md) — frontend (React) usage patterns (optional).
+
+### Process
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — how to propose changes, DCO sign-off, and PR scope.
 
 ## Key Decisions & Defaults
 - **JSON**: snake_case; lists use `{ items, page_info }`, single objects unwrapped; omit absent fields (avoid nulls)
 - **Timestamps**: ISO-8601 UTC with `Z`, always include milliseconds (e.g., `2025-09-01T20:00:00.000Z`)
 - **Filtering**: OData-style `$filter` with operators. Example: `$filter=status in ('open','in_progress') and created_at ge 2025-01-01T00:00:00Z`
 - **Sorting**: OData-style `$orderby`. Example: `$orderby=priority desc,created_at asc`
-- **Pagination**: cursor-based (`limit`, `cursor`); default `25`, max `200`; cursors in `page_info`
+- **Pagination**: cursor-based (`limit`, `cursor`); default `25`, max `200` (see [CONSTANTS.md](./REST/CONSTANTS.md) for the single source of every numeric constant); cursors in `page_info`
 - **Field projection**: OData-style `$select`. Example: `$select=id,title`
 - **Errors**: RFC 9457 Problem Details (`application/problem+json`)
 - **Concurrency**: `ETag` + `If-Match` (412 on mismatch)
-- **Idempotency**: `Idempotency-Key` on POST/PATCH/DELETE; retention 1h with replay detection
+- **Idempotency**: `Idempotency-Key` on POST/PATCH/DELETE; tiered retention, 1h minimum (see [CONSTANTS.md](./REST/CONSTANTS.md)) with replay detection
 - **Rate limits**: IETF RateLimit headers (`RateLimit-Policy`, `RateLimit`); 429 includes `Retry-After`
 - **OpenAPI**: 3.1 as the source-of-truth; generate TS types and React hooks
 
 ## How to Adopt
 
 ### Option 1: Git Submodule (Recommended)
-Keep DNA guidelines synchronized across projects:
+Keep DNA guidelines synchronized across projects. Pin the submodule to a released tag rather
+than tracking `main`, so an upstream edit cannot silently change the guidelines your project
+follows:
 
 ```bash
-# Add DNA as a submodule to your project
-git submodule add https://github.com/cyberfabric/DNA.git docs/DNA
+# Add DNA as a submodule, pinned to a tag
+git submodule add -b <tag> https://github.com/constructorfabric/DNA.git docs/DNA
 git submodule update --init
+
+# Or pin an existing submodule to a tag explicitly
+git -C docs/DNA checkout <tag>
 
 # Reference the guidelines in your project
 ln -s docs/DNA/REST/API.md API_GUIDELINES.md
@@ -52,8 +100,8 @@ For standalone projects or when you need customized versions:
 
 ```bash
 # Copy the guidelines you need
-curl -o API_GUIDELINES.md https://raw.githubusercontent.com/cyberfabric/DNA/main/REST/API.md
-curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/cyberfabric/DNA/main/languages/RUST.md
+curl -o API_GUIDELINES.md https://raw.githubusercontent.com/constructorfabric/DNA/main/REST/API.md
+curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/constructorfabric/DNA/main/languages/RUST.md
 ```
 
 ### Step-by-Step Implementation
@@ -83,7 +131,7 @@ Follow DNA guidelines for all API development:
 - OData-style sorting: `$orderby=priority desc,created_at asc`
 - RFC 9457 Problem Details for all errors
 - ETags for optimistic concurrency control
-- Idempotency-Key header for POST/PATCH/DELETE operations
+- Clients SHOULD send the Idempotency-Key header on POST/PATCH/DELETE; servers MUST honour it on those methods
 
 ## Code Generation Requirements
 When generating API code:
@@ -91,7 +139,7 @@ When generating API code:
 2. Implement proper error handling with Problem Details format
 3. Add OpenAPI documentation with `utoipa` annotations
 4. Include request/response examples in documentation
-5. Use UUID v7 for all resource identifiers
+5. Use lowercase hyphenated UUID v7 (RFC 9562) for all resource identifiers on the wire
 6. Implement soft deletes with `deleted_at` timestamps
 7. Add proper CORS configuration for web clients
 8. Include tracing and observability headers
@@ -124,7 +172,7 @@ conventions:
   pagination:
     type: "cursor-based"
     params: ["limit", "cursor"]
-    defaults: { limit: 25, max: 200 }
+    defaults: { limit: 25, max: 200 } # see REST/CONSTANTS.md for the canonical values
     response: "page_info with next_cursor, prev_cursor"
 
   filtering:
@@ -147,8 +195,8 @@ conventions:
 
   idempotency:
     header: "Idempotency-Key"
-    methods: ["POST", "PATCH", "DELETE"]
-    retention: "1 hour"
+    methods: ["POST", "PATCH", "DELETE"] # clients SHOULD send it here; servers MUST honour it
+    retention: "1 hour minimum; tiered per operation criticality — see REST/CONSTANTS.md"
 
 code_generation:
   rust:
@@ -164,7 +212,7 @@ code_generation:
     optimization: "Optimistic updates and cache management"
 
 required_patterns:
-  - "UUID v7 for all resource identifiers"
+  - "Lowercase hyphenated UUID v7 (RFC 9562) for all resource identifiers on the wire"
   - "Soft deletes with deleted_at timestamps"
   - "Request tracing with traceparent headers"
   - "Rate limiting with RateLimit-* headers"
@@ -176,14 +224,15 @@ required_patterns:
 
 #### Makefile Integration
 ```makefile
-# Update DNA Guidelines
+# Update DNA Guidelines (pin to a tag, do not track main; see Option 1 above)
 update-guidelines:
-	git submodule update --remote docs/DNA
+	git -C docs/DNA fetch --tags
+	git -C docs/DNA checkout <tag>
 
 # Validate API against guidelines
 validate-api:
 	@echo "Checking API compliance with DNA API guidelines..."
-	# Add your validation scripts here
+	npx --yes @stoplight/spectral-cli lint openapi.json --ruleset docs/DNA/schemas/spectral.yaml --fail-severity warn
 ```
 
 #### CI/CD Integration
@@ -194,19 +243,25 @@ on: [push, pull_request]
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Check API Guideline Compliance
         run: |
-          # Validate OpenAPI spec against API Guideline patterns
-          # Check for required headers, envelope format, etc.
+          # Lint the OpenAPI spec against the DNA-provided Spectral ruleset
+          npx --yes @stoplight/spectral-cli lint openapi.json --ruleset docs/DNA/schemas/spectral.yaml --fail-severity warn
 ```
 
 ## References
 - Problem Details (RFC 9457): https://www.rfc-editor.org/rfc/rfc9457
-- RateLimit Fields (RFC 9239): https://www.rfc-editor.org/rfc/rfc9239
+- RateLimit Fields (`draft-ietf-httpapi-ratelimit-headers`, pinned at revision 11):
+  https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/ — the field syntax
+  has changed across revisions and MUST be re-verified against the current revision before
+  implementation.
 - W3C Trace Context: https://www.w3.org/TR/trace-context/
 - JSON Merge Patch (RFC 7396): https://www.rfc-editor.org/rfc/rfc7396
 - Sunset Header (RFC 8594): https://www.rfc-editor.org/rfc/rfc8594
+- Deprecation Header (RFC 9745): https://www.rfc-editor.org/rfc/rfc9745

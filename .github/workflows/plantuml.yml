@@ -1,0 +1,51 @@
+name: plantuml
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  # Only permission needed — reads the checked-out files.
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # Pinned to an immutable commit SHA (supply-chain hardening); the trailing
+        # `# v4` lets Dependabot bump the pin when a new release moves the v4 tag.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Extract fenced plantuml blocks from PlantUML.md
+        run: python3 ci/extract_plantuml.py
+
+      - name: Render every diagram
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(ci/plantuml-render/out/diagram-*.puml)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No .puml files were extracted; extraction is broken."
+            exit 1
+          fi
+
+          # Pinned by digest (supply-chain hardening); the trailing comment names
+          # the human-readable tag the digest currently resolves to.
+          image="plantuml/plantuml@sha256:f2c8916a795483bf32ea61ca63b1c6726845c0085c997d86431e20b52ca1c257" # 1.2026.7
+
+          failed=0
+          for f in "${files[@]}"; do
+            echo "Rendering ${f}..."
+            # -failfast2 makes PlantUML exit non-zero on a syntax error. Without it
+            # it renders an "error" image and exits 0, and the job passes on a broken
+            # diagram — which is the whole thing this job exists to catch.
+            if ! docker run --rm -v "$PWD/ci/plantuml-render/out:/data" "${image}" -failfast2 -tsvg "/data/$(basename "${f}")"; then
+              echo "::error::Failed to render ${f}"
+              failed=1
+            fi
+          done
+
+          if [ "${failed}" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "Rendered ${#files[@]} diagram(s) successfully."

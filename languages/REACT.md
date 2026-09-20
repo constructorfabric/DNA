@@ -1,6 +1,7 @@
 # React Frontend — Usage Patterns
 
 ## Types & Client
+
 - Generate TS types from OpenAPI (e.g., `openapi-typescript`)
 - Use TanStack Query; compose a thin client with auth, error parsing, and retry
 - The client MUST expose response metadata (`ETag`, `Headers`), not just the parsed body —
@@ -90,6 +91,7 @@ export async function fetchJson<T>(url: string, init: RequestInit = {}): Promise
 ```
 
 ## Retry with Backoff
+
 Retry only the status codes `STATUS_CODES.md` marks retryable, and only when the request is
 either safe (`GET`/`HEAD`/`OPTIONS`) or carries a stable `Idempotency-Key` for the same
 logical operation. Respect `Retry-After` when the server sends one; otherwise back off
@@ -134,6 +136,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
 ```
 
 ## Idempotency-Key
+
 Generate **one key per mutation attempt at a logical operation** — it MUST stay stable
 across that operation's own retries, or the server cannot recognize a replay (see D8 /
 `API.md` §8). Generate it once inside the mutation function, never per individual `fetch`
@@ -147,6 +150,7 @@ function newIdempotencyKey(): string {
 ```
 
 ## Cursor Pagination (`useInfiniteQuery`)
+
 Clients MUST NOT parse the `cursor` value — treat it as completely opaque (D3). Direction is
 baked into the token at mint time, so paging backward is just sending `prev_cursor` back as
 the `cursor` query parameter.
@@ -191,6 +195,7 @@ export function useTicketsInfinite(filters: { status?: string } = {}) {
 no `total_count` to compute it from (see `QUERYING.md`).
 
 ## Query Example (single resource, ETag threaded through the cache)
+
 Fetch through `fetchJsonWithMeta` so the `ETag` lives in the query cache alongside the data.
 Mutations then read it back with `queryClient.getQueryData` instead of re-fetching just to
 get a header.
@@ -212,6 +217,7 @@ export function useTicket(id: string) {
 ```
 
 ## Mutation Example: read-modify-write with `If-Match`
+
 The full cycle: read the cached `ETag`, send it as `If-Match`, and on `412 Precondition
 Failed` refetch, re-apply the same patch against the new `ETag`, and retry once. A second
 `412` is a genuine conflict — surface it to the caller instead of looping.
@@ -301,6 +307,7 @@ export function useUpdateTicketOptimistic(id: string) {
 ```
 
 ## Generated Hooks
+
 Hooks SHOULD be generated from the OpenAPI document (`openapi-typescript` plus a hook
 generator, e.g. `orval` or a TanStack Query codegen plugin) rather than hand-written, so
 query keys, request shapes and response types stay in sync with the spec automatically. The
@@ -308,6 +315,7 @@ hooks in this guide are illustrative of the underlying patterns, not a template 
 hand-maintained production code.
 
 ## Norms not yet covered by this guide
+
 - `$filter` / `$select` construction helpers (building and validating OData query strings)
 - Batch endpoints (`:batch`, `:batchUpdate`, `:batchDelete`)
 - Upload flows (multipart / pre-signed URLs)

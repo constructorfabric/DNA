@@ -1,8 +1,10 @@
 # PlantUML Engineering Style Specification
 
-**Complete specification for creating beautiful, readable PlantUML diagrams**
+Conventions for readable, consistent PlantUML component diagrams: palette, contrast
+thresholds, arrow styles, spacing, and copy-ready templates.
 
 ## Table of Contents
+
 1. [Scope and Placement](#scope-and-placement)
 2. [Color Scheme](#color-schemes)
 3. [Complete Template](#complete-template)
@@ -32,6 +34,7 @@ See the [repository README](../README.md) for how this document fits into the re
 
 **REQUIRED:** Text/background contrast MUST be at least **4.5:1** (WCAG 2.1 AA, normal
 text). Every color pairing in this document has been measured against that threshold:
+
 - **Light/bright backgrounds** generally need **Black text** (`#000000`) to clear 4.5:1.
 - **Dark/saturated backgrounds** generally need **White text** (`#FFFFFF`) to clear 4.5:1.
 
@@ -43,7 +46,7 @@ for every palette below. Apply this rule to ALL components in ALL themes.
 ### Light Theme - Professional Engineering Palette
 
 | Component Type | Color | Hex | Text Color | Usage |
-|---------------|-------|-----|------------|-------|
+| --------------- | ------- | ----- | ------------ | ------- |
 | **Type A** | Steel Blue | `#6B8CAE` | Black `#000000` | Client-facing components |
 | **Type B** | Sage Green | `#7D9B7D` | Black `#000000` | Processing components |
 | **Type C** | Slate Purple | `#8B7B9B` | Black `#000000` | Storage components |
@@ -63,7 +66,7 @@ template.
 ### Group Background Colors
 
 | Group | Background | Border | Text Color |
-|-------|-----------|--------|------------|
+| ------- | ----------- | -------- | ------------ |
 | **Layer 1** | `#E7EDF2` | `#6B8CAE` | Black `#000000` |
 | **Layer 2** | `#EBF0EB` | `#7D9B7D` | Black `#000000` |
 | **Layer 3** | `#EEEAF0` | `#8B7B9B` | Black `#000000` |
@@ -75,7 +78,7 @@ template.
 Dark background with bright accent colors:
 
 | Component Type | Color | Hex | Text Color | Usage |
-|---------------|-------|-----|------------|-------|
+| --------------- | ------- | ----- | ------------ | ------- |
 | **Type A** | Bright Cyan | `#00D9FF` | Black `#000000` | Client-facing components |
 | **Type B** | Lime Green | `#7FFF00` | Black `#000000` | Processing components |
 | **Type C** | Purple | `#9B59B6` | White `#FFFFFF` | Storage components |
@@ -93,7 +96,7 @@ Dark background with bright accent colors:
 Different arrow styles for different types of connections:
 
 | Arrow Type | Syntax | Usage |
-|-----------|--------|-------|
+| ----------- | -------- | ------- |
 | **Solid** | `-->` | Synchronous calls, direct dependencies |
 | **Dashed** | `-[dashed]->` | Async calls, optional dependencies |
 | **Bold** | `==>` | Primary data flow |
@@ -422,6 +425,7 @@ end note
 ### Light Theme Colors
 
 #### Type A - Client-facing Components
+
 ```plantuml
 component [Component A1] as comp_a1 #6B8CAE
 component [Component A2] as comp_a2 #6B8CAE
@@ -430,6 +434,7 @@ component [Component A4] as comp_a4 #6B8CAE
 ```
 
 #### Type B - Processing Components
+
 ```plantuml
 component [Component B1] as comp_b1 #7D9B7D
 component [Component B2] as comp_b2 #7D9B7D
@@ -439,6 +444,7 @@ component [Component B5] as comp_b5 #7D9B7D
 ```
 
 #### Type C - Storage Components
+
 ```plantuml
 database [Storage C1] as storage_c1
 database [Storage C2] as storage_c2
@@ -447,6 +453,7 @@ database [Storage C3] as storage_c3
 ```
 
 #### Type D - Temporary Storage Components
+
 ```plantuml
 component [Component D1] as comp_d1 #B8A992
 component [Component D2] as comp_d2 #B8A992
@@ -454,6 +461,7 @@ component [Component D3] as comp_d3 #B8A992
 ```
 
 #### Type E - Async Communication Components
+
 ```plantuml
 component [Component E1] as comp_e1 #B88B96
 component [Component E2] as comp_e2 #B88B96
@@ -462,6 +470,7 @@ component [Component E4] as comp_e4 #B88B96
 ```
 
 #### Type F - Supporting Components
+
 ```plantuml
 component [Component F1] as comp_f1 #7A8A94
 component [Component F2] as comp_f2 #7A8A94
@@ -470,6 +479,7 @@ component [Component F4] as comp_f4 #7A8A94
 ```
 
 #### Type G - External Components
+
 ```plantuml
 component [Component G1] as comp_g1 #6E9488
 component [Component G2] as comp_g2 #6E9488
@@ -480,6 +490,7 @@ component [Component G4] as comp_g4 #6E9488
 ### Dark Theme Colors (Chalkboard Style)
 
 #### Type A - Client-facing Components
+
 ```plantuml
 component [Component A1] as comp_a1 #00D9FF
 component [Component A2] as comp_a2 #00D9FF
@@ -487,6 +498,7 @@ component [Component A3] as comp_a3 #00D9FF
 ```
 
 #### Type B - Processing Components
+
 ```plantuml
 component [Component B1] as comp_b1 #7FFF00
 component [Component B2] as comp_b2 #7FFF00
@@ -494,6 +506,7 @@ component [Component B3] as comp_b3 #7FFF00
 ```
 
 #### Type C - Storage Components
+
 ```plantuml
 database [Storage C1] as storage_c1
 database [Storage C2] as storage_c2
@@ -501,24 +514,28 @@ database [Storage C2] as storage_c2
 ```
 
 #### Type D - Temporary Storage Components
+
 ```plantuml
 component [Component D1] as comp_d1 #FF9500
 component [Component D2] as comp_d2 #FF9500
 ```
 
 #### Type E - Async Communication Components
+
 ```plantuml
 component [Component E1] as comp_e1 #FF6B9D
 component [Component E2] as comp_e2 #FF6B9D
 ```
 
 #### Type F - Supporting Components
+
 ```plantuml
 component [Component F1] as comp_f1 #AAAAAA
 component [Component F2] as comp_f2 #AAAAAA
 ```
 
 #### Type G - External Components
+
 ```plantuml
 component [Component G1] as comp_g1 #FFD700
 component [Component G2] as comp_g2 #FFD700
@@ -683,6 +700,7 @@ rectangle "Group Name" #BackgroundColor {
 ## Configuration Settings
 
 ### Small Diagrams (< 15 components)
+
 ```plantuml
 skinparam nodesep 80
 skinparam ranksep 100
@@ -700,6 +718,7 @@ skinparam arrow {
 ```
 
 ### Medium Diagrams (15-30 components)
+
 ```plantuml
 skinparam nodesep 70
 skinparam ranksep 90
@@ -717,6 +736,7 @@ skinparam arrow {
 ```
 
 ### Large Diagrams (> 30 components)
+
 ```plantuml
 skinparam nodesep 60
 skinparam ranksep 80
@@ -738,6 +758,7 @@ skinparam arrow {
 ## Rules and Best Practices
 
 ### 1. Base Structure
+
 ```plantuml
 @startuml
 !theme plain
@@ -754,11 +775,13 @@ tangles or fails to render on a large diagram, fall back to `skinparam linetype 
 or omit the line to use PlantUML's default routing.
 
 ### 2. Component Colors
+
 - **Always specify color** after `as`: `component [Name] as alias #COLOR`
 - **Databases** use color from `skinparam database`
 - **Groups** use light shades of main colors
 
 ### 3. Arrows
+
 - **NO LABELS**: `comp1 -down-> comp2`
 - **With direction**: `-down->`, `-right->`, `-up->`, `-left->`
 - **Arrow color**: grey `#757575` (neutral)
@@ -766,11 +789,13 @@ or omit the line to use PlantUML's default routing.
 **Why no labels?** Labels on arrows overlap with other elements in complex diagrams.
 
 ### 4. Notes
+
 - **For descriptions** instead of arrow labels
 - **Color**: yellow `#FFF9C4` (like sticky notes)
 - **Placement**: `note right of`, `note left of`, `note bottom of`
 
 ### 5. Grouping
+
 - **Use** `rectangle` for logical groups
 - **Background color** should be light
 - **Name** should be brief and clear
@@ -778,7 +803,7 @@ or omit the line to use PlantUML's default routing.
 ### 6. Arrow Directions
 
 | Syntax | Direction |
-|--------|-----------|
+| -------- | ----------- |
 | `comp1 -right-> comp2` | Right |
 | `comp1 -left-> comp2` | Left |
 | `comp1 -down-> comp2` | Down |
@@ -859,4 +884,3 @@ comp_b -down-> storage_c
 ---
 
 This specification is complete. Apply it consistently across all component diagrams in the repository.
-

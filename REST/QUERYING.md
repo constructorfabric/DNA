@@ -38,6 +38,7 @@ A **subset of OData syntax** is employed for filtering and sorting, offering fam
   - MUST include a unique tiebreaker (typically `id`) last for stable pagination; if omitted, the server appends `id` automatically.
 
 Notes:
+
 - Endpoints MUST document their canonical sort and whether it is ascending or descending.
 - Only indexed fields MAY be used in `$filter` and `$orderby`.
 - If an endpoint supports client-selectable sort, filters or projection, the cursor MUST encode and validate all three (`s`, `f`, `p`); otherwise requests with mismatched params MUST be rejected — see [Validation Rules](#validation-rules).
@@ -68,6 +69,7 @@ Return a consistent envelope:
 ```
 
 Rules:
+
 - `items` are in the endpoint's **canonical sort order**, whichever direction the client navigated in. A backward query is executed with an inverted `ORDER BY` and the result set is re-reversed before serialisation, so the response is always canonical — see [Backward Navigation](#backward-navigation).
 - `next_cursor` points to the position immediately after the last item in `items` and is OMITTED when there is no next page.
 - `prev_cursor` points to the position immediately before the first item in `items` and is OMITTED when there is no previous page.
@@ -116,11 +118,13 @@ Define ordering using standardized field tokens. By default, only `created_at` a
 > Additional ordering fields MAY be defined per endpoint. Each MUST be indexed, documented in the endpoint's allowlist, and accompanied by explicit comparison semantics. Fields whose display value is not their sort value (an enum ranked by severity, for example) MUST document the sort value, because it is the sort value that the cursor carries in `k`.
 
 Field comparison semantics:
+
 - Strings: compare using defined collation; default is case-insensitive NFKC with `en-US` unless the endpoint specifies otherwise.
 - Timestamps: compare by instant in UTC.
 - Numbers: IEEE-754 comparisons; NaN not allowed; nulls not allowed in ordering fields.
 
 Allowed `s` tokens (comma-separated, each with an explicit `+`/`-` direction prefix): `created_at`, `id`.
+
 - Endpoints MAY introduce additional domain-specific tokens if documented; include them verbatim in `s` and define their comparison semantics. All tokens MUST correspond to indexed fields.
 
 ## Indexed Fields & Allowed Parameters
@@ -215,7 +219,7 @@ paths:
 ```
 
 | Member | Type | Required | Meaning |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `v` | integer | yes | Cursor format version. Currently `2`. |
 | `k` | array | yes | The raw comparison values of the anchor row, one per token in `s`, in the same order. |
 | `s` | string | yes | Effective sort, as comma-separated tokens each carrying an explicit `+` (ASC) or `-` (DESC) prefix, e.g. `-created_at,-id` or `-priority,+created_at,+id`. |
@@ -224,6 +228,7 @@ paths:
 | `p` | string \| null | yes | Hash of the normalized `$select`; `null` for the default projection. |
 
 Guidelines:
+
 - `k` carries the values needed for comparison in the database (e.g., an RFC 3339 timestamp string and an id string). When multiple sort keys are used, `k` MUST include a value for each, in `s` order.
 - `d` is set when the cursor is minted: `next_cursor` is minted with `"next"`, `prev_cursor` with `"prev"`. Because both are sent back in the same `cursor` parameter, `d` is the only thing that tells the server whether to look forward or backward. Without it, backward pagination is not implementable.
 - Direction lives in `s` per token; there is no separate `o` member. `o` existed in `v = 1`, was redundant with `s`, and could not express a mixed-direction sort — that is why it was removed.
@@ -392,6 +397,7 @@ LIMIT :page_size_plus_one
 Then `items = rows.slice(0, page_size).reverse()`.
 
 Notes:
+
 - Many databases support mixed-direction indexes; verify support for your engine. The inverted `ORDER BY` of a backward query needs the same index read in the opposite direction, which every mainstream engine supports.
 - This OR-chain predicate matches the index order and remains sargable.
 
@@ -493,6 +499,7 @@ Sparse field selection via the OData-style `$select` query parameter. Returns on
 **Syntax**: `$select=field1,field2,field3` (comma-separated, no whitespace, case-sensitive)
 
 **Examples**:
+
 ```http
 GET /v1/tickets/018f6c9e-2c3b-7b1a-8f4a-9c3d2b1a0e5f?$select=id,title,status,priority
 GET /v1/tickets?$filter=status eq 'open'&$orderby=priority desc&$select=id,title,status
@@ -503,6 +510,7 @@ GET /v1/tickets?$filter=status eq 'open'&$orderby=priority desc&$select=id,title
 ## Default Projection
 
 When `$select` is omitted, servers return a **default projection**:
+
 - **Includes**: Common fields (`id`, `type`), core business fields (`title`, `status`), timestamps, small reference IDs
 - **Excludes**: Large text fields, binary data, sensitive fields, expensive computed fields
 
@@ -517,11 +525,13 @@ The default projection MUST be documented per resource in OpenAPI using the `x-o
 ## Response Format
 
 **Request**:
+
 ```http
 GET /v1/tickets?limit=2&$select=id,title,status
 ```
 
 **Response** (200 OK) — only requested fields included:
+
 ```json
 {
   "items": [
@@ -577,6 +587,7 @@ Field types are defined in the resource schema; `x-odata-select` only specifies 
 ## Code Examples
 
 **Get ticket with specific fields**:
+
 ```bash
 curl -sS \
   -H "Authorization: Bearer $TOKEN" \
@@ -584,6 +595,7 @@ curl -sS \
 ```
 
 **Combine with filtering, sorting, and pagination**:
+
 ```bash
 curl -sS \
   -H "Authorization: Bearer $TOKEN" \

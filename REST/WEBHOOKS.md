@@ -55,7 +55,7 @@ byte-for-byte definition, no receiver can verify anything.
 
 **Construction**: the signed payload is the UTF-8 string
 
-```
+```text
 v1:<timestamp>:<raw request body>
 ```
 
@@ -76,15 +76,20 @@ Fixed inputs, so a receiver implementation can be tested against this exact vect
 - Secret: `whsec_5f6a1c2d3e4f5061728394a5b6c7d8e9`
 - `X-Timestamp`: `1757861700`
 - Raw body:
-  ```
+
+  ```text
   {"id":"018f6c9e-2c3b-7b1a-8f4a-9c3d2b1a0e5f","event_type":"ticket.created","created_at":"2025-09-14T12:34:56.789Z","data":{"id":"018f6c9e-1a2b-7c3d-9e4f-5a6b7c8d9e0f","status":"open"}}
   ```
+
 - Signed payload (`v1:<timestamp>:<raw body>`):
-  ```
+
+  ```text
   v1:1757861700:{"id":"018f6c9e-2c3b-7b1a-8f4a-9c3d2b1a0e5f","event_type":"ticket.created","created_at":"2025-09-14T12:34:56.789Z","data":{"id":"018f6c9e-1a2b-7c3d-9e4f-5a6b7c8d9e0f","status":"open"}}
   ```
+
 - `X-Signature`:
-  ```
+
+  ```text
   v1=22228fe85ed25f0463daace3184c7dde941e7a9eaa745bca14f56e91b6cf0d77
   ```
 

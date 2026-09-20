@@ -10,6 +10,7 @@ introduced in an earlier block is already in scope for later ones — later
 blocks only add imports they need for the first time.
 
 ## Backend Stack & Libraries
+
 - Routing/middleware: `axum`, `tower-http` (CORS, compression, timeouts)
 - JSON & validation: `serde`, `validator`
 - OpenAPI: `utoipa`, `utoipa-swagger-ui` (optional docs UI)
@@ -27,11 +28,13 @@ stdlib `std::time::Duration`, deferring to this document for the date-time crate
 this document is the canonical Rust guidance and `time` is the DNA choice.
 
 ## OpenAPI Generation
+
 - Annotate handlers with `utoipa::path`
 - Export OpenAPI 3.1 JSON at `/v1/openapi.json`
 - Validate in CI with an OpenAPI linter
 
 ## Data Types
+
 ```rust
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -127,6 +130,7 @@ impl IntoResponse for Problem {
 ```
 
 ## axum Handler with utoipa
+
 ```rust
 use axum::extract::Query;
 use axum::http::HeaderMap;
@@ -449,11 +453,13 @@ pub fn trim_and_orient(mut rows: Vec<TicketRow>, page_size: usize, direction: Di
 ```
 
 ## Idempotency & ETags (server hints)
+
 - Persist `(idempotency_key, request_fingerprint, response_hash, expires_at)`
 - On replay with same fingerprint: return stored response + `Idempotency-Replayed: true`
 - For writes, compute and return `ETag`; clients send `If-Match` for concurrency
 
 ## Timestamps
+
 - Use `time::OffsetDateTime` for timestamp fields.
 - **`#[serde(with = "time::serde::rfc3339")]` does NOT guarantee millisecond
   formatting.** The `time` crate's RFC 3339 formatter omits the subsecond
@@ -495,6 +501,7 @@ mod iso8601_millis_tests {
 ```
 
 ## Durations
+
 - Use `std::time::Duration` for duration fields in configuration files.
 - To parse human-readable durations (e.g., "5m", "1h 30m", "2d"), wrap
   `Option<Duration>` with the public [`humantime-serde`](https://crates.io/crates/humantime-serde)
@@ -508,6 +515,7 @@ mod iso8601_millis_tests {
   This violates PLID-41.03 *Safe Defaults*. Give the field an explicit,
   non-zero default instead, as shown below.
 - Usage example in configuration structs:
+
 ```rust
 use std::time::Duration;
 
@@ -521,6 +529,7 @@ pub struct Config {
     pub timeout: Option<Duration>,
 }
 ```
+
 - This allows configuration files to use readable formats like `timeout = "30s"` or `retry_interval = "5m"` instead of raw milliseconds or seconds, while an omitted `timeout` resolves to a documented 30-second default rather than zero.
 
 ## Norms not yet covered by this guide

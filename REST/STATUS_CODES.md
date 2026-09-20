@@ -131,6 +131,7 @@ value-level validation failure.
   - Use for: Returned by API gateways, reverse proxies, load balancers, or BFF services when waiting for upstream. Application servers should not return 504 for their own slow operations.
 
 **5xx vs 4xx Decision**:
+
 - Use **4xx** when the client can fix the problem (bad input, missing auth, etc.)
 - Use **5xx** when the server/infrastructure has the problem (bugs, outages, dependencies)
 - When in doubt: if retrying the identical request might succeed after server recovery, use 5xx

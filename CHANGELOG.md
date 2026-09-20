@@ -10,6 +10,7 @@ instead of tracking `main`.
 ## [Unreleased]
 
 ### Fixed
+
 - Corrected every adoption path pointing at the old `cyberfabric` GitHub
   organization; the repository now lives at `constructorfabric/DNA`.
 - Corrected the RateLimit reference: RFC 9239 does not define a RateLimit
@@ -21,6 +22,7 @@ instead of tracking `main`.
   honour).
 
 ### Added
+
 - A "Conventions" section documenting RFC 2119 / RFC 8174 requirement-keyword
   usage across the corpus.
 - `README.md` §Start Here now lists every document in the repository, closing
@@ -33,6 +35,7 @@ instead of tracking `main`.
   the build on error.
 
 ### Changed
+
 - `code-ranker.yml` now runs on `push` to `main` only, plus `pull_request`,
   instead of double-running on every PR.
 - The PR template's honour-system checkboxes ("Code examples tested", "Links

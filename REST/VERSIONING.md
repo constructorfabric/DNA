@@ -21,7 +21,7 @@ This document defines versioning strategy, compatibility rules, and deprecation 
 - **Internal versioning**: Use semantic versioning (e.g., `1.2.3`) internally for tracking
 - **Pre-release environments**: `preview` and `experimental` tiers are an ENVIRONMENT dimension, not a path version. They are served from a separate host or base path (e.g. `https://api-preview.example.com/v1`, `https://api-experimental.example.com/v1`) — never as a `v1-alpha`/`v1-beta` path segment.
 
-```
+```text
 https://api.example.com/v1/users
 https://api.example.com/v2/users
 https://api-preview.example.com/v1/users
@@ -32,7 +32,7 @@ https://api-preview.example.com/v1/users
 Stability tiers follow [PLID-10.02 Stability Declaration](../public-interface/PLID.md#plid-1002-stability-declaration-crit) — the same vocabulary used for SDKs, so a repository that ships both an API and a client library states compatibility once, not twice.
 
 | Tier | Path | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | **experimental** | `https://api-experimental.example.com/v1` | No compatibility promise; may be reshaped or removed at any release. |
 | **preview** | `https://api-preview.example.com/v1` | Stabilizing; breaking changes possible but unlikely before promotion. |
 | **stable** | `https://api.example.com/v1` | Production ready; backward compatibility guaranteed until the next major version. |
@@ -46,6 +46,7 @@ Promotion from `experimental` or `preview` to `stable` MUST NOT change the path 
 ### Backward Compatibility (Within Major Version)
 
 **MUST maintain compatibility** for:
+
 - Existing endpoint URLs
 - Request/response field names and types
 - HTTP status codes for existing scenarios
@@ -53,6 +54,7 @@ Promotion from `experimental` or `preview` to `stable` MUST NOT change the path 
 - Core functionality behavior
 
 **MAY be added** without breaking compatibility:
+
 - New optional fields in requests
 - New fields in responses
 - New endpoints
@@ -63,6 +65,7 @@ Promotion from `experimental` or `preview` to `stable` MUST NOT change the path 
 ### Forward Compatibility (Client Resilience)
 
 Clients **MUST** be designed to:
+
 - Ignore unknown fields in responses
 - Handle additional enum values gracefully
 - Not rely on field order in JSON objects
@@ -73,6 +76,7 @@ Clients **MUST** be designed to:
 ### ✅ Non-Breaking Changes
 
 **Request Changes**:
+
 - Adding optional fields
 - Adding optional query parameters
 - Adding new enum values to optional fields
@@ -80,6 +84,7 @@ Clients **MUST** be designed to:
 - Relaxing validation rules
 
 **Response Changes**:
+
 - Adding new fields
 - Adding new enum values
 - Adding new optional headers
@@ -87,6 +92,7 @@ Clients **MUST** be designed to:
 - Improving performance/response times
 
 **Endpoint Changes**:
+
 - Adding new endpoints
 - Adding new HTTP methods to existing resources
 - Adding new optional headers
@@ -94,6 +100,7 @@ Clients **MUST** be designed to:
 ### ❌ Breaking Changes
 
 **Request Changes**:
+
 - Removing fields
 - Making optional fields required
 - Changing field types
@@ -103,6 +110,7 @@ Clients **MUST** be designed to:
 - Changing URL structure
 
 **Response Changes**:
+
 - Removing fields
 - Changing field types
 - Changing field semantics
@@ -111,6 +119,7 @@ Clients **MUST** be designed to:
 - Changing error response format
 
 **Endpoint Changes**:
+
 - Removing endpoints
 - Removing HTTP methods
 - Changing authentication requirements
@@ -174,12 +183,14 @@ Content-Type: application/json
 ### Migration Strategy
 
 **Gradual Migration**:
+
 - Support overlapping versions (typically 2 major versions)
 - Provide clear migration paths
 - Offer dual-write capabilities for data changes
 - Maintain feature parity during transition
 
 **Migration Tools**:
+
 - Automated compatibility checkers
 - Code generation for new SDKs
 - Migration scripts for common patterns
@@ -188,6 +199,7 @@ Content-Type: application/json
 ### Version Negotiation
 
 **Path-based (Recommended)**:
+
 ```http
 GET /v2/users HTTP/1.1
 Host: api.example.com
@@ -204,6 +216,7 @@ API-Version: 2
 ```
 
 It is REJECTED because:
+
 - **Cacheability**: the URL is the cache key; a header-selected version fragments the cache behind a single URL, or requires `Vary: API-Version`, which most caches and CDNs handle poorly.
 - **Visibility**: the version does not appear in access logs, browser history, or bug reports, making incidents harder to diagnose.
 - **Testability**: a path-based version is testable with a plain `curl https://api.example.com/v2/users`; a header-based version requires remembering a non-standard header on every request.
@@ -213,11 +226,13 @@ It is REJECTED because:
 ### Robust Client Design
 
 **Version Handling**:
+
 - Always specify API version explicitly
 - Handle version-specific responses gracefully
 - Implement fallback mechanisms for deprecated features
 
 **Error Handling**:
+
 ```json
 {
   "type": "https://api.example.com/errors/version-not-supported",
@@ -230,6 +245,7 @@ It is REJECTED because:
 ```
 
 **Future-Proofing**:
+
 - Use strongly-typed models with unknown field handling
 - Implement graceful degradation for new enum values
 - Version your own client SDKs alongside API versions
@@ -237,11 +253,12 @@ It is REJECTED because:
 ### SDK Versioning
 
 **Client SDK Strategy**:
+
 - Major SDK version tracks API major version
 - Minor SDK updates for new features within API version
 - Patch SDK updates for bug fixes
 
-```
+```text
 SDK v2.1.0 → API v2
 SDK v2.2.0 → API v2 (new features)
 SDK v3.0.0 → API v3

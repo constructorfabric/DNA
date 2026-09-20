@@ -3,6 +3,7 @@
 These are opinionated, concise, and LLM-friendly guidelines designed to create consistent and adaptable APIs and microservices. The core principles are stack-agnostic, with specific guidance available for Rust backends and React frontends.
 
 ## Why (Rationale)
+
 - **Consistency**: One way to do common things reduces cognitive load.
 - **Explicitness**: Types, units, timezones, and defaults are always stated.
 - **Evolvability**: Versioned APIs, forward-compatible schemas, idempotent writes.
@@ -10,6 +11,7 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - **Security first**: HTTPS, least privilege, safe defaults.
 
 ## What (Scope)
+
 - Stack-agnostic core: protocol, JSON shape, pagination/filter/sort, errors, caching, CORS, rate limiting
 - Concurrency and idempotency, async jobs, webhooks, uploads
 - OpenAPI source-of-truth and client codegen (any backend/frontend)
@@ -30,6 +32,7 @@ Every document in this repository, grouped by purpose. If you add a new document
 here — an unlinked document is treated as an orphan and the link-check job will fail the PR.
 
 ### Core
+
 - [API.md](./REST/API.md) — the core REST API guideline: protocol, JSON conventions, error
   model, concurrency, auth, rate limiting, versioning, and more. Start here for any stack.
 - [QUERYING.md](./REST/QUERYING.md) — cursor pagination, `$filter`, `$orderby` and `$select`
@@ -50,6 +53,7 @@ here — an unlinked document is treated as an orphan and the link-check job wil
   non-breaking changes, and deprecation.
 
 ### Reference
+
 - [CHECKLIST.md](./REST/CHECKLIST.md) — a conformance checklist, one line per checkable norm.
 - [PLID.md](./public-interface/PLID.md) — Public Interface Design principles that apply
   across REST, events, and other public surfaces.
@@ -57,13 +61,16 @@ here — an unlinked document is treated as an orphan and the link-check job wil
   templates.
 
 ### Language guides
+
 - [RUST.md](./languages/RUST.md) — backend (Rust) specifics (optional).
 - [REACT.md](./languages/REACT.md) — frontend (React) usage patterns (optional).
 
 ### Process
+
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — how to propose changes, DCO sign-off, and PR scope.
 
 ## Key Decisions & Defaults
+
 - **JSON**: snake_case; lists use `{ items, page_info }`, single objects unwrapped; omit absent fields (avoid nulls)
 - **Timestamps**: ISO-8601 UTC with `Z`, always include milliseconds (e.g., `2025-09-01T20:00:00.000Z`)
 - **Filtering**: OData-style `$filter` with operators. Example: `$filter=status in ('open','in_progress') and created_at ge 2025-01-01T00:00:00Z`
@@ -79,6 +86,7 @@ here — an unlinked document is treated as an orphan and the link-check job wil
 ## How to Adopt
 
 ### Option 1: Git Submodule (Recommended)
+
 Keep DNA guidelines synchronized across projects. Pin the submodule to a released tag rather
 than tracking `main`, so an upstream edit cannot silently change the guidelines your project
 follows:
@@ -96,6 +104,7 @@ ln -s docs/DNA/REST/API.md API_GUIDELINES.md
 ```
 
 ### Option 2: Copy Guidelines
+
 For standalone projects or when you need customized versions:
 
 ```bash
@@ -105,6 +114,7 @@ curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/constructorfabr
 ```
 
 ### Step-by-Step Implementation
+
 1) **Setup guidelines**: Use submodule or copy approach above
 2) **Configure AI assistants**: Update your `.cursorrules` and `.windsurfrules` (see below)
 3) **Define resources**: Model your domain per [API.md](./REST/API.md) sections 3-4
@@ -117,6 +127,7 @@ curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/constructorfabr
 ### AI Assistant Configuration
 
 #### Cursor Rules (`.cursorrules`)
+
 ```markdown
 # API Development Guidelines
 
@@ -157,6 +168,7 @@ Refer to docs/DNA/REST/ for complete implementation examples and patterns.
 ```
 
 #### Windsurf Rules (`.windsurfrules`)
+
 ```yaml
 api_standards:
   framework: "DNA API Guidelines"
@@ -223,6 +235,7 @@ required_patterns:
 ### Integration Examples
 
 #### Makefile Integration
+
 ```makefile
 # Update DNA Guidelines (pin to a tag, do not track main; see Option 1 above)
 update-guidelines:
@@ -236,6 +249,7 @@ validate-api:
 ```
 
 #### CI/CD Integration
+
 ```yaml
 # .github/workflows/api-compliance.yml
 name: API Compliance Check
@@ -256,12 +270,13 @@ jobs:
 ```
 
 ## References
-- Problem Details (RFC 9457): https://www.rfc-editor.org/rfc/rfc9457
+
+- Problem Details (RFC 9457): <https://www.rfc-editor.org/rfc/rfc9457>
 - RateLimit Fields (`draft-ietf-httpapi-ratelimit-headers`, pinned at revision 11):
-  https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/ — the field syntax
+  <https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/> — the field syntax
   has changed across revisions and MUST be re-verified against the current revision before
   implementation.
-- W3C Trace Context: https://www.w3.org/TR/trace-context/
-- JSON Merge Patch (RFC 7396): https://www.rfc-editor.org/rfc/rfc7396
-- Sunset Header (RFC 8594): https://www.rfc-editor.org/rfc/rfc8594
-- Deprecation Header (RFC 9745): https://www.rfc-editor.org/rfc/rfc9745
+- W3C Trace Context: <https://www.w3.org/TR/trace-context/>
+- JSON Merge Patch (RFC 7396): <https://www.rfc-editor.org/rfc/rfc7396>
+- Sunset Header (RFC 8594): <https://www.rfc-editor.org/rfc/rfc8594>
+- Deprecation Header (RFC 9745): <https://www.rfc-editor.org/rfc/rfc9745>

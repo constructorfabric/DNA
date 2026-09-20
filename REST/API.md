@@ -7,6 +7,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 ## Table of Contents
 
 ### Core Framework
+
 - [1. Core Principles](#1-core-principles)
 - [2. Protocol & Content](#2-protocol--content)
 - [3. Resource Modeling & URLs](#3-resource-modeling--urls)
@@ -16,6 +17,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - [7. Error Model (Problem Details)](#7-error-model-problem-details)
 
 ### Advanced Patterns
+
 - [8. Concurrency & Idempotency](#8-concurrency--idempotency)
 - [9. Authentication & Authorization](#9-authentication--authorization)
 - [10. Rate Limiting & Quotas](#10-rate-limiting--quotas)
@@ -23,6 +25,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - [12. Webhooks (Outbound)](#12-webhooks-outbound)
 
 ### Implementation Details
+
 - [13. Internationalization, Numbers & Time](#13-internationalization-numbers--time)
 - [14. Caching](#14-caching)
 - [15. Security & CORS](#15-security--cors)
@@ -30,6 +33,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - [17. Versioning & Deprecation](#17-versioning--deprecation)
 
 ### Reference
+
 - [18. Canonical Status Codes](#18-canonical-status-codes)
 - [19. Batch & Bulk](#19-batch--bulk)
 - [20. OpenAPI & Codegen](#20-openapi--codegen)
@@ -40,11 +44,13 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - [25. Uploads](#25-uploads)
 
 ### Quick Reference
+
 - [Operational Headers](#operational-headers-quick-reference)
 - [Constants](#constants)
 - [References](#references)
 
 ## 1. Core Principles
+
 - **Consistency over novelty**: Prefer one clear way to do things.
 - **Explicitness**: Always specify types, units, timezones, and defaults.
 - **Evolvability**: Versioned paths, idempotency, and forward-compatible schemas.
@@ -52,6 +58,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - **Security first**: HTTPS only, least privilege, safe defaults.
 
 ## 2. Protocol & Content
+
 - **Media type**: `application/json; charset=utf-8` (request & response)
 - **Errors**: Problem Details `application/problem+json` (RFC 9457) — see [§7](#7-error-model-problem-details)
 - **Encoding**: UTF-8
@@ -59,6 +66,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - **Idempotency**: `Idempotency-Key` header on unsafe methods (see [§8](#8-concurrency--idempotency))
 
 ## 3. Resource Modeling & URLs
+
 - **Nouns, plural**: `/users`, `/tickets`, `/tickets/{ticket_id}`
 - **Hierarchy if strict ownership**: `/users/{user_id}/keys`
 - **Prefer top-level + filters** over deep nesting: `/tickets?$filter=assignee_id eq '...'`
@@ -73,6 +81,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 - **Standard fields**: `created_at`, `updated_at`, optional `deleted_at`
 
 ## 4. JSON Conventions
+
 - **Naming**: snake_case (consistent with backend conventions and databases)
 - **Nullability**: Prefer omitting absent fields over `null`. The one exception is a JSON
   Merge Patch request body, where `null` is the delete sentinel — see [§6](#6-request-semantics).
@@ -101,6 +110,7 @@ Requirement keywords (`MUST`, `SHOULD`, `MAY`, …) are used as defined in the [
 ## 5. Pagination, Filtering, Sorting, Field Projection
 
 For the complete specification see [QUERYING.md](QUERYING.md):
+
 - **Cursor pagination**: Opaque, versioned cursors with `limit` and `cursor` parameters.
   `limit` defaults and caps are defined once in [CONSTANTS.md](CONSTANTS.md); an
   out-of-range `limit` is rejected with `422 INVALID_LIMIT`, never clamped.
@@ -113,6 +123,7 @@ For the complete specification see [QUERYING.md](QUERYING.md):
   shipped; there is deliberately no interim alternative — see [§23](#23-performance--dos).
 
 ## 6. Request Semantics
+
 - **Create**: `POST /tickets` → 201 + `Location` + resource in body
 - **Partial update**: `PATCH /tickets/{id}` — JSON Merge Patch
   ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396))
@@ -137,6 +148,7 @@ Implementations that strip nulls from request bodies silently break field cleari
   `application/json` for `PATCH`.
 
 ## 7. Error Model (Problem Details)
+
 - **Always** return RFC 9457 Problem Details for 4xx/5xx, with
   `Content-Type: application/problem+json`. The one exception is batch endpoints — see
   [Batch exception](#batch-exception) below.
@@ -208,6 +220,7 @@ See [BATCH.md](BATCH.md) for the complete specification.
   [STATUS_CODES.md](STATUS_CODES.md).
 
 ## 8. Concurrency & Idempotency
+
 - **Optimistic locking**: Representations carry `ETag` (strong or weak). Clients send
   `If-Match`. On mismatch → 412.
 - **Idempotency**: Clients SHOULD send `Idempotency-Key` on `POST`, `PATCH` and `DELETE`;
@@ -243,6 +256,7 @@ return `409 IDEMPOTENCY_IN_PROGRESS` with a `Retry-After` header. Without this r
 implementations either double-execute the operation or serialise callers into timeouts.
 
 ## 9. Authentication & Authorization
+
 - **Auth**: OAuth2/OIDC Bearer tokens in `Authorization: Bearer <token>`
 - **Scopes/permissions**: Document per endpoint; insufficient → 403
 - **Service-to-service**: mTLS optional
@@ -254,6 +268,7 @@ isolation, API keys, and the 403-vs-404 information-disclosure decision — see
 [AUTH.md](AUTH.md).
 
 ## 10. Rate Limiting & Quotas
+
 - **Headers** (following [draft-ietf-httpapi-ratelimit-headers](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/), revision 11):
   - `RateLimit-Policy: "default";q=100;w=3600` (defines quota policy: 100 requests per hour)
   - `RateLimit: "default";r=72;t=1800` (current status: 72 remaining, resets in 1800 seconds)
@@ -267,6 +282,7 @@ isolation, API keys, and the 403-vs-404 information-disclosure decision — see
   structured field syntax with parameters (not separate headers).
 
 ## 11. Asynchronous Operations
+
 - For long tasks return `202 Accepted` + `Location: /jobs/{job_id}`
 - **Job resource**:
 
@@ -302,6 +318,7 @@ isolation, API keys, and the 403-vs-404 information-disclosure decision — see
   its own documentation; do not assume a client can subscribe.
 
 ## 12. Webhooks (Outbound)
+
 - **Event shape**: `event_type`, `id`, `created_at`, `data`. The event's own identifier is
   `id` in the payload and `X-Event-Id` on the wire.
 - **Delivery**: POST JSON to subscriber URL
@@ -318,6 +335,7 @@ replay protection, subscription management, event-type naming and versioning, an
 dead-letter retrieval — see [WEBHOOKS.md](WEBHOOKS.md).
 
 ## 13. Internationalization, Numbers & Time
+
 - **Response timestamps** MUST be UTC (`Z`) and MUST include exactly three fractional digits
   `.SSS` (e.g., `2025-09-01T20:00:00.000Z`). If a timezone is needed, add a separate
   `timezone` field (IANA name).
@@ -330,15 +348,17 @@ dead-letter retrieval — see [WEBHOOKS.md](WEBHOOKS.md).
   (see [§7](#7-error-model-problem-details)).
 
 ## 14. Caching
+
 - Reads: `ETag` + `Cache-Control: private, max-age=30` when safe
 - Mutations: `Cache-Control: no-store`
 - Conditional: `If-None-Match` → 304
 
 ## 15. Security & CORS
+
 - HTTPS only; HSTS enabled
 - CORS allow-list explicit origins; example:
 
-```
+```text
 Access-Control-Allow-Origin: https://app.example.com
 Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
 Access-Control-Allow-Headers: Authorization, Content-Type, Idempotency-Key, If-Match, If-None-Match
@@ -355,6 +375,7 @@ clients.
   `default-src *` or `script-src 'unsafe-inline'`
 
 ## 16. Observability & Diagnostics
+
 - **Tracing**: accept/propagate `traceparent` (W3C). Emit **`X-Trace-Id`** on all responses.
 - **Header naming**: the wire header is `X-Trace-Id`. `trace_id` is the JSON member in
   Problem Details bodies and the structured-log field name — it MUST NOT be used as an HTTP
@@ -393,6 +414,7 @@ For complete HTTP status code definitions, the 400-vs-422 decision rule, and the
 error code registry, see [STATUS_CODES.md](STATUS_CODES.md).
 
 Quick reference:
+
 - 200 OK (read/update)
 - 201 Created (+ `Location`)
 - 202 Accepted (async)
@@ -417,6 +439,7 @@ For the complete batch and bulk operations specification including error formats
 options, and idempotency, see [BATCH.md](BATCH.md).
 
 **Quick Summary:**
+
 - **Endpoint pattern**: one batch endpoint = one operation —
   `POST /resources:batch` (create), `POST /resources:batchUpdate`,
   `POST /resources:batchDelete`. The presence of `id` in an item never changes the operation.
@@ -430,6 +453,7 @@ options, and idempotency, see [BATCH.md](BATCH.md).
 - **Optimistic locking**: Per-item `if_match` field for version checking
 
 ## 20. OpenAPI & Codegen
+
 - **Source of truth**: OpenAPI 3.1
 - For Rust backend specifics (utoipa, serde, validator), see [RUST.md](../languages/RUST.md)
 - Client SDK: generate TypeScript types (`openapi-typescript`) and React hooks (TanStack
@@ -443,6 +467,7 @@ options, and idempotency, see [BATCH.md](BATCH.md).
 - Provide example payloads for every operation.
 
 ## 21. Example Endpoints
+
 - **List Tickets**
 
 ```bash
@@ -476,6 +501,7 @@ per-token directions, matching the `$orderby` that was sent; `k` carries one val
 sent as `null`.
 
 Two endpoint-specific notes this example depends on:
+
 - `/v1/tickets` extends the default ordering allowlist (`created_at`, `id`) with `priority`.
 - `priority` sorts by an **ordinal**, not by its string value: `low` = 1, `medium` = 2,
   `high` = 3. That ordinal is what appears in the cursor's `k`, which is why `k[0]` is `3`
@@ -484,7 +510,7 @@ Two endpoint-specific notes this example depends on:
 
 - **Update with Concurrency**
 
-```
+```text
 PATCH /v1/tickets/018f6c9e-2c3b-7b1a-8f4a-9c3d2b1a0e5f
 If-Match: W/"etag-abc"
 Idempotency-Key: 018f6c9e-6a71-7c8d-8e9f-0a1b2c3d4e5f
@@ -498,19 +524,21 @@ Content-Type: application/merge-patch+json
 
 - **Async Job**
 
-```
+```text
 POST /v1/reports → 202 Accepted
 Location: /v1/jobs/018f6c9e-4e5f-7a6b-8c7d-9e0f1a2b3c4d
 Retry-After: 5
 ```
 
 ## 22. Backward Compatibility Rules (Client-facing)
+
 - Clients ignore unknown fields
 - Do not rely on property order
 - Treat enums laxly: unknown enum → display as string, never crash
 - Handle pagination cursors generically and treat them as fully opaque
 
 ## 23. Performance & DoS
+
 - Enforce max list limits and payload sizes — see [CONSTANTS.md](CONSTANTS.md)
 - Deny N+1 by default. Relation expansion is **not supported**: there is no `include=`
   parameter and no other interim mechanism. `$expand` is the planned mechanism
@@ -570,6 +598,7 @@ Each endpoint MUST be comprehensively documented to serve both human developers 
 **Rate Limit**: Standard (100/hour)
 
 **Request Body Schema**:
+
 ```json
 {
   "title": "string (required, max 255 chars)",
@@ -580,6 +609,7 @@ Each endpoint MUST be comprehensively documented to serve both human developers 
 ```
 
 **Success Response** (201):
+
 ```json
 {
   "id": "018f6c9e-5f60-7b7c-8d8e-9f0a1b2c3d4e",
@@ -594,6 +624,7 @@ Each endpoint MUST be comprehensively documented to serve both human developers 
 ```
 
 **Error Responses**:
+
 - **400**: Unparseable request body
 - **401**: Missing/invalid authentication
 - **403**: Insufficient permissions
@@ -601,6 +632,7 @@ Each endpoint MUST be comprehensively documented to serve both human developers 
 - **429**: Rate limit exceeded
 
 **Code Examples**:
+
 ```bash
 curl -X POST https://api.example.com/v1/resources \
   -H "Authorization: Bearer eyJ..." \
@@ -622,6 +654,7 @@ identifiers are hyphenated UUIDv7, response timestamps carry `.SSS`, and error b
 ## 25. Uploads
 
 Quick reference:
+
 - Small binary payloads use direct multipart upload; anything large or user-supplied uses a
   **pre-signed URL**.
 - The 1 MB JSON payload cap of [§23](#23-performance--dos) does **not** apply to binary
@@ -636,6 +669,7 @@ interaction with `Idempotency-Key` and async jobs — see [UPLOADS.md](UPLOADS.m
 ---
 
 ## Operational Headers (Quick Reference)
+
 - Requests may include: `Authorization`, `Idempotency-Key`, `If-Match`, `If-None-Match`,
   `Accept-Encoding`, `traceparent`, `X-Request-Id`
 - Responses should include: `Content-Type`, `ETag` (when cacheable), `Location` (201/202),
@@ -652,6 +686,7 @@ Every numeric constant in this guideline — limits, caps, retention windows, ti
 defined once in [CONSTANTS.md](CONSTANTS.md). Reference it rather than restating a number.
 
 ## References
+
 - RFC 9457 Problem Details: <https://www.rfc-editor.org/rfc/rfc9457>
 - RFC 7396 JSON Merge Patch: <https://www.rfc-editor.org/rfc/rfc7396>
 - RFC 9562 UUID (including UUIDv7): <https://www.rfc-editor.org/rfc/rfc9562>

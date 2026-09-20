@@ -5,18 +5,24 @@ Thank you for your interest in contributing! This guide explains the minimal wor
 ## 1) Legal: Developer Certificate of Origin (DCO)
 
 This project uses the Developer Certificate of Origin (DCO) version 1.1.
+
 - The DCO text is included in `DCO.txt` (Version 1.1). This is the current and widely adopted version; please keep it as 1.1.
 - Every commit must include a Signed-off-by line to certify you have the right to submit the contribution under the project license (Apache-2.0).
 
 Sign off your commits:
+
 ```bash
 git commit -s -m "your message"
 ```
+
 This adds a footer like:
-```
+
+```text
 Signed-off-by: Your Name <your.email@example.com>
 ```
+
 Enable auto sign-off for all commits:
+
 ```bash
 git config --global format.signoff true
 ```
@@ -25,22 +31,28 @@ git config --global format.signoff true
 
 1. Fork the repository (GitHub → Fork)
 2. Add remotes locally (replace <org> with the upstream organization):
+
    ```bash
    git remote set-url origin git@github.com:myfork/DNA.git
    git remote add upstream git@github.com:constructorfabric/DNA.git
    git fetch upstream
    git checkout main && git reset --hard upstream/main
    ```
+
 3. Create a topic branch from the up-to-date `upstream/main`:
+
    ```bash
    git checkout -b docs/<short-topic>
    ```
+
 4. Make focused changes (keep PRs small and single-topic)
 5. Commit with sign-off (`-s`) and descriptive message
 6. Push the branch to your fork:
+
    ```bash
    git push -u origin docs/<short-topic>
    ```
+
 7. Open a Pull Request from `myfork/DNA:docs/<short-topic>` to `upstream:main`
 
 ## 3) PR Scope & Structure
@@ -52,6 +64,7 @@ git config --global format.signoff true
   enforces this.
 
 Suggested categories:
+
 - `ci/compliance`: DCO, workflows, PR templates
 - `docs/api`: API guideline structure/content
 - `docs/rust`: Rust best practices
@@ -60,9 +73,11 @@ Suggested categories:
 ## 4) Commit Message Convention
 
 Use clear, imperative summaries (max ~72 chars), optionally with a domain:
-```
+
+```text
 docs(api): unify section 6 and expand section 24
 ```
+
 Add a multi-line body when needed to explain rationale, scope, and any nuances.
 
 Always include DCO sign-off (`-s`).
@@ -70,6 +85,7 @@ Always include DCO sign-off (`-s`).
 ## 5) PR Checklist
 
 Before submitting your PR, please verify:
+
 - [ ] All commits are signed off (DCO) with `git commit -s`
 - [ ] The PR contains a single, focused topic
 - [ ] Headings and anchors are consistent and linked correctly
@@ -80,11 +96,18 @@ Before submitting your PR, please verify:
 ## 6) Review & Merge
 
 - All automated checks are required and must pass before merge:
-  - **DCO** — every commit carries a `Signed-off-by:` trailer
-  - **Links** — every link in every Markdown file resolves (`lychee`)
+  - **DCO** — every commit carries a `Signed-off-by:` trailer. This is enforced
+    organization-wide by the DCO GitHub App, not by a workflow in this repository, so there
+    is no `dco.yml` here to look for.
+  - **Links** — every link in every Markdown file resolves (`lychee`), on pull requests and
+    on a weekly schedule, so external rot is caught even with no PR open
   - **Rust examples** — every fenced `rust` block in `RUST.md` compiles and its tests pass
   - **Markdown lint** — structural Markdown rules (`markdownlint-cli2`)
-  - **PlantUML render** — every fenced `plantuml` block in `PlantUML.md` renders without error
+  - **PlantUML render** — every fenced `plantuml` block in `PlantUML.md` renders without
+    error, and every arrow endpoint is a declared alias
+  - **Document invariants** — the examples obey the norms they illustrate: cursors decode,
+    documented hashes match, `Sunset` weekdays agree with their dates, every Problem Details
+    `code` is in the registry, and no document is an orphan
 - A maintainer will review for clarity, scope, and alignment with DNA principles
 - Address feedback via follow-up commits in the same branch
 - Squash merge is recommended for documentation-only PRs

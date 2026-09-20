@@ -13,7 +13,7 @@ runnable examples has to hold its own examples to that bar.
 
 To regenerate and verify locally, run from the repository root:
 
-```
+```text
 python3 ci/extract_rust_examples.py
 cargo check --manifest-path ci/rust-examples/Cargo.toml
 cargo test  --manifest-path ci/rust-examples/Cargo.toml

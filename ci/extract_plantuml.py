@@ -53,6 +53,49 @@ def extract_blocks(text: str) -> list[str]:
     return blocks
 
 
+# Element declarations: `component [Name] as alias`, `database "Name" as alias`, etc.
+DECL_RE = re.compile(
+    r"^\s*(?:component|database|node|cloud|queue|actor|folder|frame|storage|artifact"
+    r"|interface|rectangle|package)\s+(?:\[[^\]]*\]|\"[^\"]*\")\s+as\s+([A-Za-z_]\w*)",
+    re.M,
+)
+# Bare declarations without an `as`: `component alias`.
+BARE_DECL_RE = re.compile(
+    r"^\s*(?:component|database|node|cloud|queue|actor|folder|frame|storage|artifact"
+    r"|interface)\s+([A-Za-z_]\w*)\s*$",
+    re.M,
+)
+# Arrows between two plain aliases, covering -->, ==>, ..>, -[dotted]down->, ~~down~~> …
+ARROW_RE = re.compile(
+    r"^\s*([A-Za-z_]\w*)\s*"          # source alias
+    r"(?:[-=.~][^\s]*?)"              # arrow body, any style
+    r"(?:>|\|>)\s+"                   # arrow head
+    r"([A-Za-z_]\w*)\b",              # target alias
+    re.M,
+)
+
+
+def check_declared_aliases(block: str, index: int) -> list[str]:
+    """Report arrow endpoints that were never declared.
+
+    PlantUML silently auto-creates an undeclared alias and still exits 0, so a plain
+    render check cannot catch this. That is exactly how the dark-theme template shipped
+    an arrow to a `storage_c2` that no longer existed, giving everyone who copied the
+    template a stray unstyled box. Verified against PlantUML 1.2026.8: the undeclared
+    node renders cleanly and `-failfast2` does not complain.
+    """
+    declared = set(DECL_RE.findall(block)) | set(BARE_DECL_RE.findall(block))
+    problems = []
+    for source, target in ARROW_RE.findall(block):
+        for alias in (source, target):
+            if alias not in declared:
+                problems.append(
+                    f"diagram {index}: arrow endpoint '{alias}' is never declared — "
+                    "PlantUML will invent an unstyled node for it"
+                )
+    return sorted(set(problems))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", nargs="?", default=str(DEFAULT_SOURCE))
@@ -85,6 +128,15 @@ def main() -> int:
 
     if not diagrams:
         print(f"No complete @startuml diagrams found in {source}", file=sys.stderr)
+        return 1
+
+    undeclared: list[str] = []
+    for index, block in enumerate(diagrams, start=1):
+        undeclared.extend(check_declared_aliases(block, index))
+    if undeclared:
+        print(f"{source}: undeclared arrow endpoints", file=sys.stderr)
+        for problem in undeclared:
+            print(f"  {problem}", file=sys.stderr)
         return 1
 
     out_dir.mkdir(parents=True, exist_ok=True)

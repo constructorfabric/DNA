@@ -116,7 +116,7 @@ Problem Details body per API.md §7, matching the DNA-E06 correction to the gene
 ## Status Codes Used
 
 | Code | When |
-|---|---|
+| --- | --- |
 | `202 Accepted` | Scan is pending; poll the linked job (also used at `:complete` while the file is being processed). |
 | `413 REQUEST_TOO_LARGE` | Declared or actual size exceeds the endpoint's documented limit. |
 | `415 UNSUPPORTED_MEDIA_TYPE` | Sniffed content type is outside the endpoint's allow-list, or contradicts the declared type. |

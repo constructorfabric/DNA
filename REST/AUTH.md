@@ -84,7 +84,7 @@ wrong audience, malformed token) returns `401` with `code: "UNAUTHENTICATED"`.
 
 Every `401` response MUST include a `WWW-Authenticate` header in the RFC 6750 §3 challenge form:
 
-```
+```text
 WWW-Authenticate: Bearer realm="api.example.com", error="invalid_token", error_description="the access token expired"
 ```
 

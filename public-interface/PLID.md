@@ -65,7 +65,6 @@ A review verdict is the highest unresolved severity found. "No CRIT open" is the
 - [Minimal Review/Approval Checklist](#minimal-reviewapproval-checklist)
 - [References](#references)
 
-
 # PLID-10 Public Contract Definition & Stability
 
 A public interface must explicitly define what consumers are allowed to rely on.
@@ -130,7 +129,6 @@ Every exported symbol is a long-term support obligation. Adding a public item is
 
 Default to keeping types, functions, and modules private until there is a concrete consumer need to expose them. When unsure whether something should be public — leave it out *(Joshua Bloch)*. You can always add it later; you can rarely take it back.
 
-
 # PLID-11 Meaningful Types & Misuse-Resistant Modeling
 
 Primitive values are cheap for authors and expensive for consumers. Good interfaces encode meaning in types, names, and shapes so the intended use is obvious and the wrong use is harder to express.
@@ -180,7 +178,6 @@ Examples include:
 - unauthenticated versus authenticated
 - draft versus committed
 
-
 # PLID-12 Consistency Across Surface Area
 
 Large libraries fail not because each API is bad, but because each API is different.
@@ -206,7 +203,6 @@ Public APIs should behave how experienced users expect in that ecosystem unless 
 An API should do one thing, and do it well *(Joshua Bloch)*. A library whose purpose can be stated in a single sentence is easier to learn, easier to evolve, and easier to replace. When a module accumulates unrelated capabilities, every consumer pays for the parts they do not use, and every refactor risks breaking an unrelated client.
 
 If you cannot describe what the interface is for in one sentence — split it. Two narrow, cohesive libraries beat one broad, vague one.
-
 
 # PLID-20 Evolvability & Future Change
 
@@ -261,7 +257,6 @@ Public APIs should expose what consumers must rely on — and no more. Over-spec
 
 Document the guarantees consumers can build on (see [PLID-42.03](#plid-4203-behavioral-documentation-crit)), and explicitly mark behaviors that are *not* part of the contract (ordering of debug fields, internal cache TTLs, exact retry counts, log message wording). When in doubt, under-specify rather than over-specify.
 
-
 # PLID-21 Governance, Versioning & Release Discipline
 
 Good public interfaces require process, not just good intentions.
@@ -311,7 +306,6 @@ For each release, record:
 - security-relevant fixes called out explicitly
 - migration guidance for any non-trivial change
 - minimum supported toolchain/runtime bumps
-
 
 # PLID-30 Dependency & Boundary Design
 
@@ -377,7 +371,6 @@ Avoid:
 - inconsistent casing
 - overloaded fields with multiple meanings
 
-
 # PLID-40 Ergonomics & Discoverability
 
 Consumers should be able to succeed quickly and read code confidently later.
@@ -419,7 +412,6 @@ Consult and follow language-specific API guidelines where they exist — for exa
 If every consumer writes the same wrapping, conversion, retry, or cleanup boilerplate around your API, that boilerplate is a design failure of the library — not a fact of life for the user. *"A class should do one thing well and the user should not need to do anything the class could do for them."* — Joshua Bloch.
 
 Treat repetitive consumer code seen in examples, tests, or downstream repos as a signal to reshape the interface.
-
 
 # PLID-41 Validation, Safe Defaults & Construction
 
@@ -472,7 +464,6 @@ Examples:
 Prefer one configuration model with reasonable defaults over splitting configuration into multiple tiers (e.g., "common" vs "expert"). Two configuration surfaces are hard to maintain, the boundary between them is subjective, and "advanced" sections tend to accumulate everything the team did not want to highlight.
 
 Use per-field markers (e.g., `@advanced`, `@unstable`, doc comments) to flag knobs that should be touched only deliberately, while keeping all configuration in one place.
-
 
 # PLID-42 Documentation as Product
 
@@ -534,7 +525,6 @@ Good navigation reduces misuse and shortens learning time. Cross-link adjacent t
 
 Consistency makes large public surfaces easier to skim. Use consistent documentation structure for summaries, invariants, errors, examples, and related items.
 
-
 # PLID-43 Testing & Verification of Public Contracts
 
 Test promises, not only internals.
@@ -550,7 +540,6 @@ Compatibility promises are only real if they are exercised continuously. Verify 
 ## PLID-43.03 Consumer Test Support (MAJOR)
 
 Provide builders, fakes, fixtures, or test-support packages for common downstream testing needs when the ecosystem supports it. Without shared test support, every consumer reimplements similar scaffolding and drifts.
-
 
 # PLID-50 Error & Failure Contracts
 
@@ -615,7 +604,6 @@ Two failures with the same message may demand opposite recovery actions. Documen
 
 Human display text is not a safe compatibility boundary. For cross-process or cross-language usage, provide stable error codes distinct from human-readable messages.
 
-
 # PLID-51 Concurrency, Cancellation & Execution Model
 
 Consumers need to understand behavior under parallelism, time, and re-entrancy.
@@ -659,7 +647,6 @@ Make unsafe combinations visible at the call site through explicit naming, annot
 ## PLID-51.06 Serialization versus Parallelism Choices (MINOR)
 
 Consumers need to know whether contention is a design decision or an accidental bottleneck. If the interface intentionally serializes work, state that and explain why.
-
 
 # PLID-52 Performance & Resource Contracts
 
@@ -721,7 +708,6 @@ Document at minimum:
 
 For HTTP APIs, the concrete DNA contract is [`../REST/QUERYING.md`](../REST/QUERYING.md).
 
-
 # PLID-53 Observability & Operational Readiness
 
 Production debugging should be designed into the interface from the beginning.
@@ -765,7 +751,6 @@ For public types, ensure:
 - secrets and regulated data are redacted in both (see [PLID-53.02](#plid-5302-sensitive-data-safety-crit))
 - representations do not accidentally become a parsed contract; if structured access is needed, expose explicit accessors
 
-
 # PLID-54 Security Boundaries & Hazardous Operations
 
 Security guidance is most useful when it focuses on authority boundaries and high-risk actions rather than repeating the general misuse-resistance rules already covered by [PLID-11](#plid-11-meaningful-types--misuse-resistant-modeling) and [PLID-41](#plid-41-validation-safe-defaults--construction).
@@ -785,7 +770,6 @@ Examples:
 
 High-risk operations should require deliberate intent, not rely on subtle defaults or hidden side effects. Make destructive or irreversible actions obvious and hard to trigger accidentally.
 
-
 # PLID-55 State Mutation & Side Effects
 
 Many APIs are dangerous because mutation semantics are vague.
@@ -801,7 +785,6 @@ Avoid surprising writes, network calls, filesystem changes, telemetry emission, 
 ## PLID-55.03 Idempotent vs Non-Idempotent Operations (MAJOR)
 
 State clearly whether repeated calls are safe.
-
 
 # PLID-56 Data Lifecycle & Retention
 
@@ -824,7 +807,6 @@ Define whether delete means:
 ## PLID-56.03 Read-After-Write Guarantees (MAJOR)
 
 Consumers need to know whether writes are immediately observable.
-
 
 # Minimal Review/Approval Checklist
 

@@ -26,7 +26,15 @@
 
     // Repeated headings (e.g. "Type A" under both "Light Theme" and "Dark
     // Theme") are legitimate when they have different parents.
-    "MD024": { "siblings_only": true }
+    "MD024": { "siblings_only": true },
+
+    // public-interface/PLID.md uses `# PLID-NN <Group>` as its top-level
+    // requirement-group headings and `## PLID-NN.NN <Requirement>` beneath
+    // them, so it has many H1s by design. Demoting them would renumber every
+    // heading level and break the cross-document anchor links that
+    // ci/verify_doc_examples.py and the link-check job both rely on, so the
+    // structure stays and the rule is off.
+    "MD025": false
   },
   "globs": ["**/*.md"],
   "ignores": ["**/node_modules/**", "ci/rust-examples/target/**"]

@@ -8,7 +8,7 @@ unrepeatable. **A document that needs a number MUST link here rather than restat
 MAY show a concrete value inline for readability, but normative text MUST NOT.
 
 | Name | Value | Scope | Configurable per endpoint? | Defined by |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `DEFAULT_LIMIT` | `25` | Cursor pagination `limit` parameter, applied when the client omits `limit` | No | [QUERYING.md](QUERYING.md) |
 | `MIN_LIMIT` | `1` | Cursor pagination `limit` parameter, lower bound | No | [QUERYING.md](QUERYING.md) |
 | `MAX_LIMIT` | `200` | Cursor pagination `limit` parameter, upper bound | Yes — an endpoint MAY declare a lower max; it MUST NOT exceed `200` | [QUERYING.md](QUERYING.md) |

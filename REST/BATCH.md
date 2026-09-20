@@ -3,6 +3,7 @@
 This document specifies how to design and implement batch/bulk endpoints in REST APIs following the DNA guidelines.
 
 ## Table of Contents
+
 - [Endpoint Pattern](#endpoint-pattern)
 - [Request Format](#request-format)
 - [Response Formats](#response-formats)
@@ -33,6 +34,7 @@ change it.
 ## Request Format
 
 Each item in a batch request contains:
+
 - `idempotency_key` (optional): Unique identifier for idempotent processing
 - `if_match` (optional): ETag value for optimistic locking
 - `data` (required): The resource data for this operation
@@ -61,6 +63,7 @@ Each item in a batch request contains:
 ## Response Formats
 
 Each item in a batch response contains:
+
 - `index` (required): Zero-based position in the request array
 - `idempotency_key` (if provided): Echoed from request for correlation
 - `status` (required): HTTP status code for this item
@@ -191,6 +194,7 @@ The top-level HTTP status code reflects the aggregate outcome:
 Each failed item receives **complete RFC 9457 Problem Details** for consistency with single-item error format (see [API.md §7 Error Model](API.md#7-error-model-problem-details)).
 
 ### Required Fields
+
 - `type` - Error type URL
 - `code` - Application error code (`SCREAMING_SNAKE_CASE`; see `STATUS_CODES.md`, the registry)
 - `title` - Short error description
@@ -198,6 +202,7 @@ Each failed item receives **complete RFC 9457 Problem Details** for consistency 
 - `trace_id` - Unique trace identifier for this item
 
 ### Optional Fields
+
 - `detail` - Detailed explanation
 - `instance` - Request URL with `#item-{index}` fragment
 - `errors` - Array of field-level validation errors (for 422 responses)
@@ -372,6 +377,7 @@ Default behavior is **endpoint-specific** and must be documented for each batch 
 Most endpoints use **best-effort** semantics: each item is processed independently, and successes are committed even if other items fail.
 
 **Request:**
+
 ```json
 {
   "items": [ /* ... */ ]
@@ -381,6 +387,7 @@ Most endpoints use **best-effort** semantics: each item is processed independent
 **Response:** `207 Multi-Status` (or other status based on aggregate outcome) with per-item results showing mix of successes and failures.
 
 **Use Cases:**
+
 - Bulk user imports (independent records)
 - Creating multiple independent tickets
 - Batch notifications
@@ -417,6 +424,7 @@ Content-Type: application/problem+json
 ```
 
 **Use Cases:**
+
 - Financial transactions
 - Creating related records that must coexist (parent + children)
 - Critical business operations requiring consistency
@@ -426,6 +434,7 @@ Content-Type: application/problem+json
 Some endpoints may support both modes via request parameter for maximum flexibility:
 
 **Request:**
+
 ```json
 {
   "atomic": true,

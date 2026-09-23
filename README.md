@@ -40,7 +40,7 @@ Keep DNA guidelines synchronized across projects:
 
 ```bash
 # Add DNA as a submodule to your project
-git submodule add https://github.com/cyberfabric/DNA.git docs/DNA
+git submodule add https://github.com/constructorfabric/DNA.git docs/DNA
 git submodule update --init
 
 # Reference the guidelines in your project
@@ -52,8 +52,8 @@ For standalone projects or when you need customized versions:
 
 ```bash
 # Copy the guidelines you need
-curl -o API_GUIDELINES.md https://raw.githubusercontent.com/cyberfabric/DNA/main/REST/API.md
-curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/cyberfabric/DNA/main/languages/RUST.md
+curl -o API_GUIDELINES.md https://raw.githubusercontent.com/constructorfabric/DNA/main/REST/API.md
+curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/constructorfabric/DNA/main/languages/RUST.md
 ```
 
 ### Step-by-Step Implementation
